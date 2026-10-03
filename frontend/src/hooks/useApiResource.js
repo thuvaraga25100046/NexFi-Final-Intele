@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { RESOURCE_CHANGED_EVENT } from '../services/api.js'
 
 export default function useApiResource(loader) {
   const [attempt, setAttempt] = useState(0)
@@ -19,6 +20,12 @@ export default function useApiResource(loader) {
 
     return () => controller.abort()
   }, [loader, attempt])
+
+  useEffect(() => {
+    const refresh = () => setAttempt((value) => value + 1)
+    window.addEventListener(RESOURCE_CHANGED_EVENT, refresh)
+    return () => window.removeEventListener(RESOURCE_CHANGED_EVENT, refresh)
+  }, [])
 
   return {
     data: result.attempt === attempt ? result.data : [],

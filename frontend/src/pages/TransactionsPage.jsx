@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ArrowDownLeft, ArrowUpRight, ListFilter } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, ListFilter, Plus } from 'lucide-react'
+import CreateRecordForm from '../components/CreateRecordForm.jsx'
 import PageHeading from '../components/PageHeading.jsx'
 import ResourceState from '../components/ResourceState.jsx'
 import useApiResource from '../hooks/useApiResource.js'
@@ -10,11 +11,18 @@ const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: '
 export default function TransactionsPage() {
   const { data, loading, error, retry } = useApiResource(fetchTransactions)
   const [filter, setFilter] = useState('all')
+  const [createOpen, setCreateOpen] = useState(false)
   const filtered = data.filter((item) => filter === 'all' || item.type === filter)
 
   return (
     <div className="workspace-page">
-      <PageHeading eyebrow="YOUR MONEY, MOVING" title="Transactions" description="A record of the money coming in and going out." />
+      <PageHeading
+        actions={<button className="button button-dark add-record-button" onClick={() => setCreateOpen(!createOpen)} type="button"><Plus size={16} /> Add transaction</button>}
+        description="A record of the money coming in and going out."
+        eyebrow="YOUR MONEY, MOVING"
+        title="Transactions"
+      />
+      {createOpen && <CreateRecordForm kind="transaction" onCancel={() => setCreateOpen(false)} onCreated={() => setCreateOpen(false)} />}
       <section className="workspace-panel table-panel">
         <div className="panel-toolbar">
           <div className="segmented-control" role="group" aria-label="Filter transactions">

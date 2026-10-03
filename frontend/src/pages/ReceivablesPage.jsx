@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { CalendarDays, CircleDollarSign } from 'lucide-react'
+import { CalendarDays, CircleDollarSign, Plus } from 'lucide-react'
+import CreateRecordForm from '../components/CreateRecordForm.jsx'
 import PageHeading from '../components/PageHeading.jsx'
 import ResourceState from '../components/ResourceState.jsx'
 import useApiResource from '../hooks/useApiResource.js'
@@ -10,11 +11,18 @@ const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: '
 export default function ReceivablesPage() {
   const { data, loading, error, retry } = useApiResource(fetchReceivables)
   const [filter, setFilter] = useState('all')
+  const [createOpen, setCreateOpen] = useState(false)
   const filtered = data.filter((item) => filter === 'all' || item.status === filter)
 
   return (
     <div className="workspace-page">
-      <PageHeading eyebrow="MONEY ON ITS WAY" title="Receivables" description="Keep track of what customers owe and when it's due." />
+      <PageHeading
+        actions={<button className="button button-dark add-record-button" onClick={() => setCreateOpen(!createOpen)} type="button"><Plus size={16} /> Add receivable</button>}
+        description="Keep track of what customers owe and when it's due."
+        eyebrow="MONEY ON ITS WAY"
+        title="Receivables"
+      />
+      {createOpen && <CreateRecordForm kind="receivable" onCancel={() => setCreateOpen(false)} onCreated={() => setCreateOpen(false)} />}
       <section className="workspace-panel table-panel">
         <div className="panel-toolbar">
           <div className="segmented-control" role="group" aria-label="Filter receivables">
