@@ -6,14 +6,13 @@ import {
   Check,
   ChevronDown,
   CreditCard,
-  Menu,
   ShieldCheck,
   Sparkles,
   TrendingUp,
   WalletCards,
-  X,
 } from 'lucide-react'
-import './landing.css'
+import Brand from './components/Brand.jsx'
+import SiteHeader from './components/SiteHeader.jsx'
 
 const chartValues = [34, 48, 42, 62, 54, 73, 59, 86, 68, 78, 65, 96]
 
@@ -37,15 +36,6 @@ const features = [
     color: 'coral',
   },
 ]
-
-function Brand() {
-  return (
-    <a className="brand" href="#home" aria-label="NexFi home">
-      <span className="brand-mark" aria-hidden="true"><TrendingUp size={19} strokeWidth={2.7} /></span>
-      <span>NexFi</span>
-    </a>
-  )
-}
 
 function DashboardPreview() {
   const [period, setPeriod] = useState('Month')
@@ -126,34 +116,9 @@ function DashboardPreview() {
 }
 
 function LandingPage() {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const closeMenu = () => setMenuOpen(false)
-
   return (
     <div className="site-shell" id="home">
-      <header className="site-header">
-        <div className="nav-inner mx-auto flex w-full max-w-[1280px] items-center justify-between">
-          <Brand />
-          <nav className={`main-nav${menuOpen ? ' main-nav-open' : ''}`} aria-label="Main navigation">
-            <a href="#features" onClick={closeMenu}>Why NexFi</a>
-            <a href="#how-it-works" onClick={closeMenu}>How it works</a>
-            <a href="#about" onClick={closeMenu}>About</a>
-            <a className="mobile-nav-cta" href="#overview" onClick={closeMenu}>Explore the preview <ArrowRight size={15} /></a>
-          </nav>
-          <div className="nav-actions">
-            <a className="button button-dark nav-cta" href="#overview">Get started <ArrowUpRight size={16} /></a>
-            <button
-              aria-expanded={menuOpen}
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-              className="menu-toggle"
-              onClick={() => setMenuOpen(!menuOpen)}
-              type="button"
-            >
-              {menuOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
-          </div>
-        </div>
-      </header>
+      <SiteHeader variant="marketing" />
 
       <main>
         <section className="hero-section">
