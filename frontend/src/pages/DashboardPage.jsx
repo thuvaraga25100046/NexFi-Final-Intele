@@ -1,6 +1,7 @@
 import { ArrowDownLeft, ArrowUpRight, CalendarClock, ReceiptText, Wallet, WalletCards } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import MetricCard from '../components/MetricCard.jsx'
+import CashFlowForecastPanel from '../components/CashFlowForecastPanel.jsx'
 import PageHeading from '../components/PageHeading.jsx'
 import ResourceState from '../components/ResourceState.jsx'
 import useApiResource from '../hooks/useApiResource.js'
@@ -34,6 +35,7 @@ export default function DashboardPage() {
         <MetricCard icon={ReceiptText} label="Total payables" value={summaryValue('totalPayables')} note={summaryNote} tone="coral" />
       </div>
       {summary.error && <ResourceState loading={false} error={summary.error} retry={summary.retry} empty={false} />}
+      <CashFlowForecastPanel />
 
       <div className="dashboard-sections">
         <section className="workspace-panel">

@@ -10,13 +10,22 @@ import org.springframework.web.bind.annotation.RestController;
 public class DashboardSummaryController {
 
     private final DashboardSummaryService dashboardSummaryService;
+    private final CashFlowForecastService cashFlowForecastService;
 
-    public DashboardSummaryController(DashboardSummaryService dashboardSummaryService) {
+    public DashboardSummaryController(
+            DashboardSummaryService dashboardSummaryService,
+            CashFlowForecastService cashFlowForecastService) {
         this.dashboardSummaryService = dashboardSummaryService;
+        this.cashFlowForecastService = cashFlowForecastService;
     }
 
     @GetMapping("/summary")
     public ApiResponse<DashboardSummary> getSummary() {
         return ApiResponse.success("Dashboard summary retrieved", dashboardSummaryService.getSummary());
+    }
+
+    @GetMapping("/forecast")
+    public ApiResponse<CashFlowForecast> getForecast() {
+        return ApiResponse.success("Cash flow forecast retrieved", cashFlowForecastService.getForecast());
     }
 }

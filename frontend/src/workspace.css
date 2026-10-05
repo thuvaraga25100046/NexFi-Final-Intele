@@ -824,6 +824,123 @@
   gap: 17px;
 }
 
+.cash-flow-forecast {
+  margin-bottom: 17px;
+}
+
+.forecast-horizon {
+  padding: 6px 8px;
+  color: #58705f;
+  background: #f1f6ef;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.forecast-description {
+  margin: -8px 0 14px;
+  color: #839087;
+  font-size: 10px;
+}
+
+.forecast-totals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 14px;
+  border-top: 1px solid #edf1ec;
+  border-bottom: 1px solid #edf1ec;
+}
+
+.forecast-total {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  padding: 11px 14px;
+  border-right: 1px solid #edf1ec;
+}
+
+.forecast-total:last-child {
+  border-right: 0;
+}
+
+.forecast-total span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #839087;
+  font-size: 9px;
+}
+
+.forecast-total strong {
+  overflow: hidden;
+  color: #2b4034;
+  font-family: 'Manrope', sans-serif;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.forecast-inflow span {
+  color: #4c805d;
+}
+
+.forecast-outflow span {
+  color: #a85b4d;
+}
+
+.cash-flow-chart-wrap {
+  width: 100%;
+}
+
+.cash-flow-chart {
+  display: block;
+  width: 100%;
+  height: 190px;
+  overflow: visible;
+}
+
+.cash-flow-gridline {
+  stroke: #edf1ec;
+  stroke-width: 1;
+}
+
+.cash-flow-zero-line {
+  stroke: #c6d3c8;
+  stroke-dasharray: 4 5;
+  stroke-width: 1;
+}
+
+.cash-flow-area {
+  fill: #e9f3e8;
+  opacity: .8;
+}
+
+.cash-flow-line {
+  fill: none;
+  stroke: #34744b;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.cash-flow-endpoint {
+  fill: #fff;
+  stroke: #34744b;
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.cash-flow-date-range {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  color: #89968d;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
 .payables-unavailable {
   display: flex;
   min-height: 74px;
@@ -955,6 +1072,34 @@
 
   .dashboard-metrics-grid .metric-value {
     font-size: 16px;
+  }
+
+  .cash-flow-forecast {
+    padding: 15px 13px;
+  }
+
+  .forecast-totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .forecast-total {
+    padding: 10px 8px;
+  }
+
+  .forecast-total:nth-child(2) {
+    border-right: 0;
+  }
+
+  .forecast-total:nth-child(-n+2) {
+    border-bottom: 1px solid #edf1ec;
+  }
+
+  .forecast-total strong {
+    font-size: 13px;
+  }
+
+  .cash-flow-chart {
+    height: 165px;
   }
 
   .dashboard-metrics-grid .metric-card:last-child {
