@@ -4,7 +4,7 @@ import { Link, NavLink } from 'react-router-dom'
 import Brand from './Brand.jsx'
 
 const applicationLinks = [
-  { label: 'Dashboard', to: '/dashboard' },
+  { label: 'Home', to: '/dashboard' },
   { label: 'Transactions', to: '/transactions' },
   { label: 'Receivables', to: '/receivables' },
   { label: 'Payables', to: '/payables' },
@@ -26,7 +26,7 @@ export default function SiteHeader({ variant = 'application' }) {
               <a href="#features" onClick={closeMenu}>Why NexFi</a>
               <a href="#how-it-works" onClick={closeMenu}>How it works</a>
               <a href="#about" onClick={closeMenu}>About</a>
-              <NavLink to="/dashboard" onClick={closeMenu}>Dashboard</NavLink>
+              <NavLink to="/dashboard" onClick={closeMenu}>Home</NavLink>
             </>
           ) : applicationLinks.map(({ label, to }) => (
             <NavLink
@@ -39,7 +39,7 @@ export default function SiteHeader({ variant = 'application' }) {
               {label}
             </NavLink>
           ))}
-          {marketing && <Link className="mobile-nav-cta" to="/dashboard" onClick={closeMenu}>Open dashboard <ArrowUpRight size={15} /></Link>}
+          {marketing && <Link className="mobile-nav-cta" to="/dashboard" onClick={closeMenu}>Open Home <ArrowUpRight size={15} /></Link>}
         </nav>
         <div className="nav-actions">
           {marketing ? (

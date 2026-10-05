@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
-import { ArrowDownLeft, ArrowUpRight, CalendarClock, CircleHelp, ReceiptText, Wallet, WalletCards } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, CalendarClock, ReceiptText, Wallet, WalletCards } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import MetricCard from '../components/MetricCard.jsx'
 import PageHeading from '../components/PageHeading.jsx'
 import ResourceState from '../components/ResourceState.jsx'
 import useApiResource from '../hooks/useApiResource.js'
-import { fetchReceivables, fetchTransactions } from '../services/api.js'
+import { fetchPayables, fetchReceivables, fetchTransactions } from '../services/api.js'
 
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
 const formatAmount = (amount) => currency.format(Number(amount) || 0)
@@ -13,28 +13,34 @@ const formatAmount = (amount) => currency.format(Number(amount) || 0)
 export default function DashboardPage() {
   const transactions = useApiResource(fetchTransactions)
   const receivables = useApiResource(fetchReceivables)
+  const payables = useApiResource(fetchPayables)
   const totals = useMemo(() => {
-    const income = transactions.data.filter((item) => item.type === 'income').reduce((sum, item) => sum + Number(item.amount), 0)
-    const expenses = transactions.data.filter((item) => item.type === 'expense').reduce((sum, item) => sum + Number(item.amount), 0)
+    const income = transactions.data.filter((item) => item.type === 'income').reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+    const expenses = transactions.data.filter((item) => item.type === 'expense').reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
     const openReceivables = receivables.data.filter((item) => item.status !== 'paid')
-    const outstanding = openReceivables.reduce((sum, item) => sum + Number(item.amount), 0)
-    return { income, expenses, cashBalance: income - expenses, outstanding, openReceivables }
-  }, [transactions.data, receivables.data])
+    const openPayables = payables.data.filter((item) => item.status !== 'paid')
+    const receivablesOutstanding = openReceivables.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+    const payablesOutstanding = openPayables.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
+    return { income, expenses, cashBalance: income - expenses, receivablesOutstanding, payablesOutstanding, openReceivables, openPayables }
+  }, [transactions.data, receivables.data, payables.data])
   const recentTransactions = [...transactions.data].sort((a, b) => b.transactionDate.localeCompare(a.transactionDate)).slice(0, 5)
   const upcomingReceivables = [...totals.openReceivables].sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 4)
-  const transactionValue = (value) => transactions.loading ? '…' : transactions.error ? '—' : formatAmount(value)
-  const receivableValue = (value) => receivables.loading ? '…' : receivables.error ? '—' : formatAmount(value)
+  const upcomingPayables = [...totals.openPayables].sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 4)
+  const resourceValue = (resource, value) => resource.loading ? '…' : resource.error ? '—' : formatAmount(value)
+  const transactionNote = transactions.error ? 'Unavailable' : transactions.data.length ? 'All time' : 'No transactions yet'
+  const receivableNote = receivables.error ? 'Unavailable' : `${totals.openReceivables.length} open`
+  const payableNote = payables.error ? 'Unavailable' : `${totals.openPayables.length} open`
 
   return (
     <div className="workspace-page">
-      <PageHeading eyebrow="YOUR MONEY, AT A GLANCE" title="Dashboard" description="A clear view of what's coming in, going out, and still on its way." />
+      <PageHeading eyebrow="YOUR MONEY, AT A GLANCE" title="Home" description="A clear view of what's coming in, going out, and still on its way." />
 
       <div className="metrics-grid dashboard-metrics-grid">
-        <MetricCard icon={WalletCards} label="Current cash balance" value={transactionValue(totals.cashBalance)} note={transactions.error ? 'Unavailable' : 'Net recorded'} tone="green" />
-        <MetricCard icon={ArrowDownLeft} label="Total income" value={transactionValue(totals.income)} note={transactions.error ? 'Unavailable' : 'All time'} tone="green" />
-        <MetricCard icon={ArrowUpRight} label="Total expenses" value={transactionValue(totals.expenses)} note={transactions.error ? 'Unavailable' : 'All time'} tone="coral" />
-        <MetricCard icon={CalendarClock} label="Total receivables" value={receivableValue(totals.outstanding)} note={receivables.error ? 'Unavailable' : `${totals.openReceivables.length} open`} tone="lime" />
-        <MetricCard icon={ReceiptText} label="Total payables" value="—" note="API unavailable" tone="coral" />
+        <MetricCard icon={WalletCards} label="Current cash balance" value={resourceValue(transactions, totals.cashBalance)} note={transactionNote} tone="green" />
+        <MetricCard icon={ArrowDownLeft} label="Total income" value={resourceValue(transactions, totals.income)} note={transactionNote} tone="green" />
+        <MetricCard icon={ArrowUpRight} label="Total expenses" value={resourceValue(transactions, totals.expenses)} note={transactionNote} tone="coral" />
+        <MetricCard icon={CalendarClock} label="Total receivables" value={resourceValue(receivables, totals.receivablesOutstanding)} note={receivableNote} tone="lime" />
+        <MetricCard icon={ReceiptText} label="Total payables" value={resourceValue(payables, totals.payablesOutstanding)} note={payableNote} tone="coral" />
       </div>
 
       <div className="dashboard-sections">
@@ -43,7 +49,7 @@ export default function DashboardPage() {
             <div><span className="panel-eyebrow">KEEPING TRACK</span><h2>Recent transactions</h2></div>
             <Link className="panel-link" to="/transactions">All transactions <ArrowUpRight size={15} /></Link>
           </div>
-          <ResourceState loading={transactions.loading} error={transactions.error} retry={transactions.retry} empty={!transactions.data.length} emptyTitle="Your transactions will show up here." />
+            <ResourceState loading={transactions.loading} error={transactions.error} retry={transactions.retry} empty={!transactions.data.length} emptyTitle="Your transactions will show up here." />
           {!transactions.loading && !transactions.error && recentTransactions.length > 0 && (
             <div className="table-wrap">
               <table className="data-table">
@@ -86,15 +92,23 @@ export default function DashboardPage() {
               <div><span className="panel-eyebrow">MONEY TO PLAN FOR</span><h2>Upcoming payables</h2></div>
               <Link className="panel-link" to="/payables">Payables <ArrowUpRight size={15} /></Link>
             </div>
-            <div className="payables-unavailable">
-              <CircleHelp size={18} />
-              <span>Payables data will appear when a Payables API is available.</span>
-            </div>
+            <ResourceState loading={payables.loading} error={payables.error} retry={payables.retry} empty={!totals.openPayables.length} emptyTitle="No open payables right now." />
+            {!payables.loading && !payables.error && upcomingPayables.length > 0 && (
+              <div className="receivable-list">
+                {upcomingPayables.map((item) => (
+                  <div className="receivable-row" key={item.id}>
+                    <span className="customer-avatar">{item.vendorName.slice(0, 1).toUpperCase()}</span>
+                    <span className="receivable-customer"><strong>{item.vendorName}</strong><small>Due {item.dueDate}</small></span>
+                    <strong className="receivable-amount">{formatAmount(item.amount)}</strong>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
       </div>
 
-      <div className="dashboard-footnote"><Wallet size={16} /><span>Your NexFi overview updates as transactions and receivables are recorded.</span></div>
+      <div className="dashboard-footnote"><Wallet size={16} /><span>Your NexFi overview updates as transactions, receivables, and payables are recorded.</span></div>
     </div>
   )
 }

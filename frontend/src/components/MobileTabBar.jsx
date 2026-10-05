@@ -2,7 +2,7 @@ import { ArrowLeftRight, CircleDollarSign, CreditCard, LayoutDashboard, Settings
 import { NavLink } from 'react-router-dom'
 
 const tabs = [
-  { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+  { label: 'Home', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Transactions', to: '/transactions', icon: ArrowLeftRight },
   { label: 'Receivables', to: '/receivables', icon: CircleDollarSign },
   { label: 'Payables', to: '/payables', icon: CreditCard },

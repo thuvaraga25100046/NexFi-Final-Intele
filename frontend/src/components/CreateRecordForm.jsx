@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createReceivable, createTransaction } from '../services/api.js'
+import { createPayable, createReceivable, createTransaction } from '../services/api.js'
 
 const today = new Date().toISOString().slice(0, 10)
 
@@ -22,6 +22,17 @@ const formConfig = {
     submit: createReceivable,
     fields: [
       { name: 'customerName', label: 'Customer name', type: 'text', maxLength: 150, placeholder: 'e.g. Northstar Studio' },
+      { name: 'amount', label: 'Amount', type: 'number', min: '0.01', step: '0.01', placeholder: '0.00' },
+      { name: 'dueDate', label: 'Due date', type: 'date', defaultValue: today },
+      { name: 'status', label: 'Status', type: 'select', options: [['pending', 'Pending'], ['paid', 'Paid'], ['overdue', 'Overdue']] },
+    ],
+  },
+  payable: {
+    title: 'Add payable',
+    submitLabel: 'Save payable',
+    submit: createPayable,
+    fields: [
+      { name: 'vendorName', label: 'Vendor name', type: 'text', maxLength: 150, placeholder: 'e.g. Acme Office Supply' },
       { name: 'amount', label: 'Amount', type: 'number', min: '0.01', step: '0.01', placeholder: '0.00' },
       { name: 'dueDate', label: 'Due date', type: 'date', defaultValue: today },
       { name: 'status', label: 'Status', type: 'select', options: [['pending', 'Pending'], ['paid', 'Paid'], ['overdue', 'Overdue']] },
