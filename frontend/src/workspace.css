@@ -310,6 +310,11 @@
   color: #a85b4d;
 }
 
+.resource-success {
+  min-height: 48px;
+  color: #34744b;
+}
+
 .loading-dot {
   width: 8px;
   height: 8px;

@@ -1,26 +1,28 @@
 import { ArrowLeftRight, CircleDollarSign, CreditCard, LayoutDashboard, Settings2 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import useTranslation from '../i18n/useTranslation.js'
 
 const tabs = [
-  { label: 'Home', to: '/dashboard', icon: LayoutDashboard },
-  { label: 'Transactions', to: '/transactions', icon: ArrowLeftRight },
-  { label: 'Receivables', to: '/receivables', icon: CircleDollarSign },
-  { label: 'Payables', to: '/payables', icon: CreditCard },
-  { label: 'Settings', to: '/settings', icon: Settings2 },
+  { key: 'navigation.home', to: '/dashboard', icon: LayoutDashboard },
+  { key: 'navigation.transactions', to: '/transactions', icon: ArrowLeftRight },
+  { key: 'navigation.receivables', to: '/receivables', icon: CircleDollarSign },
+  { key: 'navigation.payables', to: '/payables', icon: CreditCard },
+  { key: 'navigation.settings', to: '/settings', icon: Settings2 },
 ]
 
 export default function MobileTabBar() {
+  const { t } = useTranslation()
   return (
-    <nav className="mobile-tab-bar" aria-label="App navigation">
-      {tabs.map(({ label, to, icon: Icon }) => (
+    <nav className="mobile-tab-bar" aria-label={t('navigation.app')}>
+      {tabs.map(({ key, to, icon: Icon }) => (
         <NavLink
-          aria-label={label}
+          aria-label={t(key)}
           className={({ isActive }) => `mobile-tab${isActive ? ' mobile-tab-active' : ''}`}
           key={to}
           to={to}
         >
           <Icon size={20} strokeWidth={1.9} />
-          <span>{label}</span>
+          <span>{t(key)}</span>
         </NavLink>
       ))}
     </nav>

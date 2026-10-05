@@ -2,13 +2,10 @@ import { ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 import ResourceState from './ResourceState.jsx'
 import useApiResource from '../hooks/useApiResource.js'
 import { fetchCashFlowForecast } from '../services/api.js'
+import useTranslation from '../i18n/useTranslation.js'
+import { formatCurrency, formatDate } from '../i18n/formatters.js'
 
-const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
-const dateFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
-const formatAmount = (amount) => currency.format(Number(amount) || 0)
-const formatDate = (date) => dateFormat.format(new Date(`${date}T00:00:00`))
-
-function ForecastChart({ days }) {
+function ForecastChart({ days, language, chartLabel, dateOptions }) {
   const width = 900
   const top = 12
   const bottom = 178
@@ -30,7 +27,7 @@ function ForecastChart({ days }) {
   return (
     <div className="cash-flow-chart-wrap">
       <svg
-        aria-label="Projected cash balance for each of the next 30 days"
+        aria-label={chartLabel}
         className="cash-flow-chart"
         preserveAspectRatio="none"
         role="img"
@@ -44,38 +41,39 @@ function ForecastChart({ days }) {
         {pointString && <polyline className="cash-flow-line" points={pointString} />}
         {lastPoint && <circle className="cash-flow-endpoint" cx={lastPoint.x} cy={lastPoint.y} r="4" />}
       </svg>
-      <div className="cash-flow-date-range"><span>{formatDate(days[0].date)}</span><span>{formatDate(days[days.length - 1].date)}</span></div>
+      <div className="cash-flow-date-range"><span>{formatDate(days[0].date, language, dateOptions)}</span><span>{formatDate(days[days.length - 1].date, language, dateOptions)}</span></div>
     </div>
   )
 }
 
 export default function CashFlowForecastPanel() {
+  const { t, language } = useTranslation()
   const forecast = useApiResource(fetchCashFlowForecast)
   const days = forecast.data?.days ?? []
 
   return (
     <section className="workspace-panel cash-flow-forecast">
       <div className="panel-heading">
-        <div><span className="panel-eyebrow">PROJECTED POSITION</span><h2>Cash flow forecast</h2></div>
-        <span className="forecast-horizon">NEXT 30 DAYS</span>
+        <div><span className="panel-eyebrow">{t('forecast.eyebrow')}</span><h2>{t('forecast.title')}</h2></div>
+        <span className="forecast-horizon">{t('forecast.horizon')}</span>
       </div>
-      <p className="forecast-description">Recorded transactions and unpaid items projected by due date.</p>
+      <p className="forecast-description">{t('forecast.description')}</p>
       <ResourceState
         loading={forecast.loading}
         error={forecast.error}
         retry={forecast.retry}
         empty={!days.length}
-        emptyTitle="No forecast data is available."
+        emptyTitle={t('forecast.empty')}
       />
       {!forecast.loading && !forecast.error && days.length > 0 && (
         <>
           <div className="forecast-totals">
-            <div className="forecast-total"><span>Opening cash</span><strong>{formatAmount(forecast.data.openingBalance)}</strong></div>
-            <div className="forecast-total forecast-inflow"><span><ArrowDownLeft size={13} /> Expected in</span><strong>{formatAmount(forecast.data.expectedInflow)}</strong></div>
-            <div className="forecast-total forecast-outflow"><span><ArrowUpRight size={13} /> Expected out</span><strong>{formatAmount(forecast.data.expectedOutflow)}</strong></div>
-            <div className="forecast-total forecast-projected"><span>Projected end</span><strong>{formatAmount(forecast.data.projectedBalance)}</strong></div>
+            <div className="forecast-total"><span>{t('forecast.openingCash')}</span><strong>{formatCurrency(forecast.data.openingBalance, language)}</strong></div>
+            <div className="forecast-total forecast-inflow"><span><ArrowDownLeft size={13} /> {t('forecast.expectedIn')}</span><strong>{formatCurrency(forecast.data.expectedInflow, language)}</strong></div>
+            <div className="forecast-total forecast-outflow"><span><ArrowUpRight size={13} /> {t('forecast.expectedOut')}</span><strong>{formatCurrency(forecast.data.expectedOutflow, language)}</strong></div>
+            <div className="forecast-total forecast-projected"><span>{t('forecast.projectedEnd')}</span><strong>{formatCurrency(forecast.data.projectedBalance, language)}</strong></div>
           </div>
-          <ForecastChart days={days} />
+          <ForecastChart days={days} language={language} chartLabel={t('forecast.chartLabel')} dateOptions={{ month: 'short', day: 'numeric' }} />
         </>
       )}
     </section>

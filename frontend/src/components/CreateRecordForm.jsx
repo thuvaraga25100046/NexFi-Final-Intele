@@ -1,49 +1,74 @@
 import { useState } from 'react'
 import { createPayable, createReceivable, createTransaction } from '../services/api.js'
+import useTranslation from '../i18n/useTranslation.js'
+import { translateApiError } from '../i18n/translations.js'
 
 const today = new Date().toISOString().slice(0, 10)
 
 const formConfig = {
   transaction: {
-    title: 'Add transaction',
-    submitLabel: 'Save transaction',
+    titleKey: 'forms.addTransaction',
+    submitLabelKey: 'actions.saveTransaction',
     submit: createTransaction,
     fields: [
-      { name: 'type', label: 'Type', type: 'select', options: [['income', 'Income'], ['expense', 'Expense']] },
-      { name: 'amount', label: 'Amount', type: 'number', min: '0.01', step: '0.01', placeholder: '0.00' },
-      { name: 'category', label: 'Category', type: 'text', maxLength: 100, placeholder: 'e.g. Salary' },
-      { name: 'transactionDate', label: 'Date', type: 'date', defaultValue: today },
-      { name: 'description', label: 'Description', type: 'text', maxLength: 500, required: false, placeholder: 'Add a note (optional)' },
+      { name: 'type', labelKey: 'forms.type', type: 'select', options: [['income', 'types.income'], ['expense', 'types.expense']] },
+      { name: 'amount', labelKey: 'forms.amount', type: 'number', min: '0.01', step: '0.01', placeholderKey: 'forms.amountPlaceholder' },
+      { name: 'category', labelKey: 'forms.category', type: 'text', maxLength: 100, placeholderKey: 'forms.salaryPlaceholder' },
+      { name: 'transactionDate', labelKey: 'forms.date', type: 'date', defaultValue: today },
+      { name: 'description', labelKey: 'forms.description', type: 'text', maxLength: 500, required: false, placeholderKey: 'forms.notePlaceholder' },
     ],
   },
   receivable: {
-    title: 'Add receivable',
-    submitLabel: 'Save receivable',
+    titleKey: 'forms.addReceivable',
+    submitLabelKey: 'actions.saveReceivable',
     submit: createReceivable,
     fields: [
-      { name: 'customerName', label: 'Customer name', type: 'text', maxLength: 150, placeholder: 'e.g. Northstar Studio' },
-      { name: 'amount', label: 'Amount', type: 'number', min: '0.01', step: '0.01', placeholder: '0.00' },
-      { name: 'dueDate', label: 'Due date', type: 'date', defaultValue: today },
-      { name: 'status', label: 'Status', type: 'select', options: [['pending', 'Pending'], ['paid', 'Paid'], ['overdue', 'Overdue']] },
+      { name: 'customerName', labelKey: 'forms.customerName', type: 'text', maxLength: 150, placeholderKey: 'forms.customerPlaceholder' },
+      { name: 'amount', labelKey: 'forms.amount', type: 'number', min: '0.01', step: '0.01', placeholderKey: 'forms.amountPlaceholder' },
+      { name: 'dueDate', labelKey: 'forms.dueDate', type: 'date', defaultValue: today },
+      { name: 'status', labelKey: 'forms.status', type: 'select', options: [['pending', 'statuses.pending'], ['paid', 'statuses.paid'], ['overdue', 'statuses.overdue']] },
     ],
   },
   payable: {
-    title: 'Add payable',
-    submitLabel: 'Save payable',
+    titleKey: 'forms.addPayable',
+    submitLabelKey: 'actions.savePayable',
     submit: createPayable,
     fields: [
-      { name: 'vendorName', label: 'Vendor name', type: 'text', maxLength: 150, placeholder: 'e.g. Acme Office Supply' },
-      { name: 'amount', label: 'Amount', type: 'number', min: '0.01', step: '0.01', placeholder: '0.00' },
-      { name: 'dueDate', label: 'Due date', type: 'date', defaultValue: today },
-      { name: 'status', label: 'Status', type: 'select', options: [['pending', 'Pending'], ['paid', 'Paid'], ['overdue', 'Overdue']] },
+      { name: 'vendorName', labelKey: 'forms.vendorName', type: 'text', maxLength: 150, placeholderKey: 'forms.vendorPlaceholder' },
+      { name: 'amount', labelKey: 'forms.amount', type: 'number', min: '0.01', step: '0.01', placeholderKey: 'forms.amountPlaceholder' },
+      { name: 'dueDate', labelKey: 'forms.dueDate', type: 'date', defaultValue: today },
+      { name: 'status', labelKey: 'forms.status', type: 'select', options: [['pending', 'statuses.pending'], ['paid', 'statuses.paid'], ['overdue', 'statuses.overdue']] },
     ],
   },
 }
 
 export default function CreateRecordForm({ kind, onCancel, onCreated }) {
+  const { t } = useTranslation()
   const config = formConfig[kind]
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  function handleInvalid(event) {
+    const field = event.target
+    const label = t(field.dataset.labelKey)
+    const validity = field.validity
+
+    if (validity.valueMissing) {
+      field.setCustomValidity(t('validation.requiredField', { field: label }))
+    } else if (validity.rangeUnderflow) {
+      field.setCustomValidity(t('validation.amountPositive'))
+    } else if (validity.stepMismatch) {
+      field.setCustomValidity(t('validation.amountPrecision'))
+    } else if (validity.tooLong) {
+      field.setCustomValidity(t('validation.maxLength', { count: field.maxLength }))
+    } else {
+      field.setCustomValidity(t('messages.validationFailed'))
+    }
+  }
+
+  function clearValidation(event) {
+    event.target.setCustomValidity('')
+  }
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -57,30 +82,31 @@ export default function CreateRecordForm({ kind, onCancel, onCreated }) {
       await config.submit(payload)
       onCreated()
     } catch (requestError) {
-      setError(requestError.message || 'Could not save this record. Try again.')
+      setError(requestError.message || t('messages.saveFailed'))
     } finally {
       setSubmitting(false)
     }
   }
 
   return (
-    <form className="record-form workspace-panel" onSubmit={handleSubmit}>
-      <div className="record-form-heading"><h2>{config.title}</h2><p>Required fields are marked by the browser.</p></div>
+    <form className="record-form workspace-panel" onInput={clearValidation} onInvalid={handleInvalid} onSubmit={handleSubmit}>
+      <div className="record-form-heading"><h2>{t(config.titleKey)}</h2><p>{t('forms.requiredHelp')}</p></div>
       <div className="record-form-fields">
         {config.fields.map((field) => (
           <label className={`record-field${field.name === 'description' ? ' record-field-wide' : ''}`} key={field.name}>
-            <span>{field.label}</span>
+            <span>{t(field.labelKey)}</span>
             {field.type === 'select' ? (
-              <select defaultValue={field.options[0][0]} name={field.name} required>
-                {field.options.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              <select data-label-key={field.labelKey} defaultValue={field.options[0][0]} name={field.name} required>
+                {field.options.map(([value, labelKey]) => <option key={value} value={value}>{t(labelKey)}</option>)}
               </select>
             ) : (
               <input
                 defaultValue={field.defaultValue}
+                data-label-key={field.labelKey}
                 maxLength={field.maxLength}
                 min={field.min}
                 name={field.name}
-                placeholder={field.placeholder}
+                placeholder={field.placeholderKey ? t(field.placeholderKey) : undefined}
                 required={field.required !== false}
                 step={field.step}
                 type={field.type}
@@ -89,11 +115,11 @@ export default function CreateRecordForm({ kind, onCancel, onCreated }) {
           </label>
         ))}
       </div>
-      {error && <p className="record-form-error" role="alert">{error}</p>}
+      {error && <p className="record-form-error" role="alert">{t('messages.error')}: {translateApiError(error, t)}</p>}
       <div className="record-form-actions">
-        <button className="record-cancel" onClick={onCancel} type="button">Cancel</button>
+        <button className="record-cancel" onClick={onCancel} type="button">{t('actions.cancel')}</button>
         <button className="button button-dark record-submit" disabled={submitting} type="submit">
-          {submitting ? 'Saving…' : config.submitLabel}
+          {submitting ? t('actions.saving') : t(config.submitLabelKey)}
         </button>
       </div>
     </form>

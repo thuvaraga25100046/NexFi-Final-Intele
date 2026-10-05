@@ -2,16 +2,18 @@ import { useState } from 'react'
 import { ArrowUpRight, CircleUserRound, Menu, X } from 'lucide-react'
 import { Link, NavLink } from 'react-router-dom'
 import Brand from './Brand.jsx'
+import useTranslation from '../i18n/useTranslation.js'
 
 const applicationLinks = [
-  { label: 'Home', to: '/dashboard' },
-  { label: 'Transactions', to: '/transactions' },
-  { label: 'Receivables', to: '/receivables' },
-  { label: 'Payables', to: '/payables' },
-  { label: 'Settings', to: '/settings' },
+  { key: 'navigation.home', to: '/dashboard' },
+  { key: 'navigation.transactions', to: '/transactions' },
+  { key: 'navigation.receivables', to: '/receivables' },
+  { key: 'navigation.payables', to: '/payables' },
+  { key: 'navigation.settings', to: '/settings' },
 ]
 
 export default function SiteHeader({ variant = 'application' }) {
+  const { t } = useTranslation()
   const [menuOpen, setMenuOpen] = useState(false)
   const marketing = variant === 'marketing'
   const closeMenu = () => setMenuOpen(false)
@@ -20,15 +22,15 @@ export default function SiteHeader({ variant = 'application' }) {
     <header className="site-header">
       <div className="nav-inner mx-auto flex w-full max-w-[1280px] items-center justify-between">
         <Brand />
-        <nav className={`main-nav${menuOpen ? ' main-nav-open' : ''}`} aria-label="Main navigation">
+        <nav className={`main-nav${menuOpen ? ' main-nav-open' : ''}`} aria-label={t('navigation.main')}>
           {marketing ? (
             <>
-              <a href="#features" onClick={closeMenu}>Why NexFi</a>
-              <a href="#how-it-works" onClick={closeMenu}>How it works</a>
-              <a href="#about" onClick={closeMenu}>About</a>
-              <NavLink to="/dashboard" onClick={closeMenu}>Home</NavLink>
+              <a href="#features" onClick={closeMenu}>{t('marketing.whyNexfi')}</a>
+              <a href="#how-it-works" onClick={closeMenu}>{t('marketing.howItWorks')}</a>
+              <a href="#about" onClick={closeMenu}>{t('marketing.about')}</a>
+              <NavLink to="/dashboard" onClick={closeMenu}>{t('navigation.home')}</NavLink>
             </>
-          ) : applicationLinks.map(({ label, to }) => (
+          ) : applicationLinks.map(({ key, to }) => (
             <NavLink
               className={({ isActive }) => isActive ? 'app-nav-active' : undefined}
               end={to === '/dashboard'}
@@ -36,23 +38,23 @@ export default function SiteHeader({ variant = 'application' }) {
               onClick={closeMenu}
               to={to}
             >
-              {label}
+              {t(key)}
             </NavLink>
           ))}
-          {marketing && <Link className="mobile-nav-cta" to="/dashboard" onClick={closeMenu}>Open Home <ArrowUpRight size={15} /></Link>}
+          {marketing && <Link className="mobile-nav-cta" to="/dashboard" onClick={closeMenu}>{t('marketing.openHome')} <ArrowUpRight size={15} /></Link>}
         </nav>
         <div className="nav-actions">
           {marketing ? (
-            <Link className="button button-dark nav-cta" to="/dashboard">Get started <ArrowUpRight size={16} /></Link>
+            <Link className="button button-dark nav-cta" to="/dashboard">{t('marketing.getStarted')} <ArrowUpRight size={16} /></Link>
           ) : (
             <>
-              <Link className="button button-dark nav-cta" to="/dashboard">Overview <ArrowUpRight size={16} /></Link>
-              <span className="app-profile" aria-label="NexFi account"><CircleUserRound size={19} /><span>JD</span></span>
+              <Link className="button button-dark nav-cta" to="/dashboard">{t('navigation.overview')} <ArrowUpRight size={16} /></Link>
+              <span className="app-profile" aria-label={t('navigation.account')}><CircleUserRound size={19} /><span>JD</span></span>
             </>
           )}
           <button
             aria-expanded={menuOpen}
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-label={menuOpen ? t('navigation.closeMenu') : t('navigation.openMenu')}
             className="menu-toggle"
             onClick={() => setMenuOpen(!menuOpen)}
             type="button"
