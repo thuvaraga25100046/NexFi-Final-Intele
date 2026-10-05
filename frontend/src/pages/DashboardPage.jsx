@@ -1,47 +1,39 @@
-import { useMemo } from 'react'
 import { ArrowDownLeft, ArrowUpRight, CalendarClock, ReceiptText, Wallet, WalletCards } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import MetricCard from '../components/MetricCard.jsx'
 import PageHeading from '../components/PageHeading.jsx'
 import ResourceState from '../components/ResourceState.jsx'
 import useApiResource from '../hooks/useApiResource.js'
-import { fetchPayables, fetchReceivables, fetchTransactions } from '../services/api.js'
+import { fetchDashboardSummary, fetchPayables, fetchReceivables, fetchTransactions } from '../services/api.js'
 
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
 const formatAmount = (amount) => currency.format(Number(amount) || 0)
 
 export default function DashboardPage() {
+  const summary = useApiResource(fetchDashboardSummary)
   const transactions = useApiResource(fetchTransactions)
   const receivables = useApiResource(fetchReceivables)
   const payables = useApiResource(fetchPayables)
-  const totals = useMemo(() => {
-    const income = transactions.data.filter((item) => item.type === 'income').reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
-    const expenses = transactions.data.filter((item) => item.type === 'expense').reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
-    const openReceivables = receivables.data.filter((item) => item.status !== 'paid')
-    const openPayables = payables.data.filter((item) => item.status !== 'paid')
-    const receivablesOutstanding = openReceivables.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
-    const payablesOutstanding = openPayables.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
-    return { income, expenses, cashBalance: income - expenses, receivablesOutstanding, payablesOutstanding, openReceivables, openPayables }
-  }, [transactions.data, receivables.data, payables.data])
+  const openReceivables = receivables.data.filter((item) => item.status !== 'paid')
+  const openPayables = payables.data.filter((item) => item.status !== 'paid')
   const recentTransactions = [...transactions.data].sort((a, b) => b.transactionDate.localeCompare(a.transactionDate)).slice(0, 5)
-  const upcomingReceivables = [...totals.openReceivables].sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 4)
-  const upcomingPayables = [...totals.openPayables].sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 4)
-  const resourceValue = (resource, value) => resource.loading ? '…' : resource.error ? '—' : formatAmount(value)
-  const transactionNote = transactions.error ? 'Unavailable' : transactions.data.length ? 'All time' : 'No transactions yet'
-  const receivableNote = receivables.error ? 'Unavailable' : `${totals.openReceivables.length} open`
-  const payableNote = payables.error ? 'Unavailable' : `${totals.openPayables.length} open`
+  const upcomingReceivables = [...openReceivables].sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 4)
+  const upcomingPayables = [...openPayables].sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 4)
+  const summaryValue = (field) => summary.loading ? '…' : summary.error ? '—' : formatAmount(summary.data[field])
+  const summaryNote = summary.error ? 'Unavailable' : summary.loading ? 'Loading' : 'Live summary'
 
   return (
     <div className="workspace-page">
       <PageHeading eyebrow="YOUR MONEY, AT A GLANCE" title="Home" description="A clear view of what's coming in, going out, and still on its way." />
 
       <div className="metrics-grid dashboard-metrics-grid">
-        <MetricCard icon={WalletCards} label="Current cash balance" value={resourceValue(transactions, totals.cashBalance)} note={transactionNote} tone="green" />
-        <MetricCard icon={ArrowDownLeft} label="Total income" value={resourceValue(transactions, totals.income)} note={transactionNote} tone="green" />
-        <MetricCard icon={ArrowUpRight} label="Total expenses" value={resourceValue(transactions, totals.expenses)} note={transactionNote} tone="coral" />
-        <MetricCard icon={CalendarClock} label="Total receivables" value={resourceValue(receivables, totals.receivablesOutstanding)} note={receivableNote} tone="lime" />
-        <MetricCard icon={ReceiptText} label="Total payables" value={resourceValue(payables, totals.payablesOutstanding)} note={payableNote} tone="coral" />
+        <MetricCard icon={WalletCards} label="Current cash balance" value={summaryValue('currentCashBalance')} note={summaryNote} tone="green" />
+        <MetricCard icon={ArrowDownLeft} label="Total income" value={summaryValue('totalIncome')} note={summaryNote} tone="green" />
+        <MetricCard icon={ArrowUpRight} label="Total expenses" value={summaryValue('totalExpenses')} note={summaryNote} tone="coral" />
+        <MetricCard icon={CalendarClock} label="Total receivables" value={summaryValue('totalReceivables')} note={summaryNote} tone="lime" />
+        <MetricCard icon={ReceiptText} label="Total payables" value={summaryValue('totalPayables')} note={summaryNote} tone="coral" />
       </div>
+      {summary.error && <ResourceState loading={false} error={summary.error} retry={summary.retry} empty={false} />}
 
       <div className="dashboard-sections">
         <section className="workspace-panel">
@@ -73,7 +65,7 @@ export default function DashboardPage() {
               <div><span className="panel-eyebrow">MONEY ON ITS WAY</span><h2>Upcoming receivables</h2></div>
               <Link className="panel-link" to="/receivables">View all <ArrowUpRight size={15} /></Link>
             </div>
-            <ResourceState loading={receivables.loading} error={receivables.error} retry={receivables.retry} empty={!totals.openReceivables.length} emptyTitle="No open receivables right now." />
+            <ResourceState loading={receivables.loading} error={receivables.error} retry={receivables.retry} empty={!openReceivables.length} emptyTitle="No open receivables right now." />
             {!receivables.loading && !receivables.error && upcomingReceivables.length > 0 && (
               <div className="receivable-list">
                 {upcomingReceivables.map((item) => (
@@ -92,7 +84,7 @@ export default function DashboardPage() {
               <div><span className="panel-eyebrow">MONEY TO PLAN FOR</span><h2>Upcoming payables</h2></div>
               <Link className="panel-link" to="/payables">Payables <ArrowUpRight size={15} /></Link>
             </div>
-            <ResourceState loading={payables.loading} error={payables.error} retry={payables.retry} empty={!totals.openPayables.length} emptyTitle="No open payables right now." />
+            <ResourceState loading={payables.loading} error={payables.error} retry={payables.retry} empty={!openPayables.length} emptyTitle="No open payables right now." />
             {!payables.loading && !payables.error && upcomingPayables.length > 0 && (
               <div className="receivable-list">
                 {upcomingPayables.map((item) => (

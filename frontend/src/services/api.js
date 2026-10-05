@@ -40,6 +40,7 @@ async function createResource(path, payload) {
 export const fetchTransactions = (signal) => getResource('transactions', signal)
 export const fetchReceivables = (signal) => getResource('receivables', signal)
 export const fetchPayables = (signal) => getResource('payables', signal)
+export const fetchDashboardSummary = (signal) => getResource('dashboard/summary', signal)
 export const createTransaction = (payload) => createResource('transactions', payload)
 export const createReceivable = (payload) => createResource('receivables', payload)
 export const createPayable = (payload) => createResource('payables', payload)
