@@ -15,13 +15,14 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/welcome" element={<LandingPage />} />
         <Route path="/dashboard" element={<AppLayout><DashboardPage /></AppLayout>} />
         <Route path="/transactions" element={<AppLayout><TransactionsPage /></AppLayout>} />
         <Route path="/receivables" element={<AppLayout><ReceivablesPage /></AppLayout>} />
         <Route path="/payables" element={<AppLayout><PayablesPage /></AppLayout>} />
         <Route path="/settings" element={<AppLayout><SettingsPage /></AppLayout>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
