@@ -8,5 +8,6 @@ public record CashFlowForecast(
         BigDecimal expectedInflow,
         BigDecimal expectedOutflow,
         BigDecimal projectedBalance,
-        List<CashFlowForecastDay> days) {
+        List<CashFlowForecastDay> days,
+        CashShortageAlert shortageAlert) {
 }

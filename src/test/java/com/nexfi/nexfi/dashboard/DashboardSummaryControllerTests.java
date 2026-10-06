@@ -65,7 +65,7 @@ class DashboardSummaryControllerTests {
         mockMvc.perform(get("/api/dashboard/summary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.currentCashBalance").value(1000.00))
+                .andExpect(jsonPath("$.data.currentCashBalance").value(800.00))
                 .andExpect(jsonPath("$.data.totalIncome").value(1000.00))
                 .andExpect(jsonPath("$.data.totalExpenses").value(200.00))
                 .andExpect(jsonPath("$.data.totalReceivables").value(300.00))
@@ -84,8 +84,9 @@ class DashboardSummaryControllerTests {
     }
 
     @Test
-    void forecastsThirtyDaysOfTransactionsAndUnpaidItems() throws Exception {
+    void forecastsThroughMonthEndForTransactionsAndUnpaidItems() throws Exception {
         LocalDate today = LocalDate.now();
+        int forecastDays = today.lengthOfMonth() - today.getDayOfMonth();
         createTransaction("income", "1000.00", today);
         createTransaction("expense", "200.00", today);
         createTransaction("income", "125.00", today.plusDays(3));
@@ -98,18 +99,44 @@ class DashboardSummaryControllerTests {
         createPayable("50.00", "overdue", today.minusDays(1));
         createPayable("25.00", "paid", today.plusDays(2));
 
-        mockMvc.perform(get("/api/dashboard/forecast"))
+        var forecast = mockMvc.perform(get("/api/dashboard/forecast"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.days.length()").value(30))
+            .andExpect(jsonPath("$.data.days.length()" ).value(forecastDays))
                 .andExpect(jsonPath("$.data.openingBalance").value(800.00))
                 .andExpect(jsonPath("$.data.expectedInflow").value(465.00))
                 .andExpect(jsonPath("$.data.expectedOutflow").value(175.00))
                 .andExpect(jsonPath("$.data.projectedBalance").value(1090.00))
-                .andExpect(jsonPath("$.data.days[0].date").value(today.plusDays(1).toString()))
+            .andExpect(jsonPath("$.data.shortageAlert").value(org.hamcrest.Matchers.nullValue()));
+
+        if (forecastDays > 0) {
+            forecast.andExpect(jsonPath("$.data.days[0].date").value(today.plusDays(1).toString()))
                 .andExpect(jsonPath("$.data.days[0].incoming").value(340.00))
                 .andExpect(jsonPath("$.data.days[0].outgoing").value(50.00))
                 .andExpect(jsonPath("$.data.days[2].projectedBalance").value(1215.00))
-                .andExpect(jsonPath("$.data.days[29].projectedBalance").value(1090.00));
+                .andExpect(jsonPath("$.data.days[" + (forecastDays - 1) + "].projectedBalance").value(1090.00));
+        }
+    }
+
+    @Test
+    void warnsWhenProjectedCashFallsShortBeforeMonthEnd() throws Exception {
+        LocalDate today = LocalDate.now();
+        int daysToMonthEnd = today.lengthOfMonth() - today.getDayOfMonth();
+        int shortageOffset = Math.min(7, daysToMonthEnd);
+        LocalDate shortageDate = today.plusDays(shortageOffset);
+        createTransaction("income", "1000.00", today);
+
+        if (shortageOffset == 0) {
+            createTransaction("expense", "1500.00", today);
+        } else {
+            createPayable("1500.00", "pending", shortageDate);
+        }
+
+        mockMvc.perform(get("/api/dashboard/forecast"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.shortageAlert.shortageAmount").value(500.00))
+                .andExpect(jsonPath("$.data.shortageAlert.shortageDate").value(shortageDate.toString()))
+                .andExpect(jsonPath("$.data.shortageAlert.daysRemaining").value(shortageOffset))
+                .andExpect(jsonPath("$.data.shortageAlert.severity").value(shortageOffset <= 3 ? "CRITICAL" : "HIGH"));
     }
 
     private void createTransaction(String type, String amount) throws Exception {

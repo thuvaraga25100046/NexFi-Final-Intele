@@ -2,6 +2,7 @@ package com.nexfi.nexfi.dashboard;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,8 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CashFlowForecastService {
 
-    private static final int FORECAST_DAYS = 30;
-
     private final TransactionRepository transactionRepository;
     private final ReceivableRepository receivableRepository;
     private final PayableRepository payableRepository;
@@ -41,7 +40,8 @@ public class CashFlowForecastService {
     public CashFlowForecast getForecast() {
         LocalDate today = LocalDate.now();
         LocalDate firstDay = today.plusDays(1);
-        LocalDate lastDay = today.plusDays(FORECAST_DAYS);
+        LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
+        int forecastDays = Math.toIntExact(ChronoUnit.DAYS.between(today, lastDay));
         Map<LocalDate, BigDecimal> incomingByDate = new HashMap<>();
         Map<LocalDate, BigDecimal> outgoingByDate = new HashMap<>();
         BigDecimal openingBalance = BigDecimal.ZERO;
@@ -74,9 +74,9 @@ public class CashFlowForecastService {
         BigDecimal projectedBalance = openingBalance;
         BigDecimal expectedInflow = BigDecimal.ZERO;
         BigDecimal expectedOutflow = BigDecimal.ZERO;
-        List<CashFlowForecastDay> days = new ArrayList<>(FORECAST_DAYS);
+        List<CashFlowForecastDay> days = new ArrayList<>(forecastDays);
 
-        for (int offset = 1; offset <= FORECAST_DAYS; offset++) {
+        for (int offset = 1; offset <= forecastDays; offset++) {
             LocalDate date = today.plusDays(offset);
             BigDecimal incoming = incomingByDate.getOrDefault(date, BigDecimal.ZERO);
             BigDecimal outgoing = outgoingByDate.getOrDefault(date, BigDecimal.ZERO);
@@ -86,8 +86,31 @@ public class CashFlowForecastService {
             days.add(new CashFlowForecastDay(date, incoming, outgoing, projectedBalance));
         }
 
-        return new CashFlowForecast(openingBalance, expectedInflow, expectedOutflow, projectedBalance, days);
+            CashShortageAlert shortageAlert = openingBalance.signum() < 0
+                ? createShortageAlert(today, today, openingBalance)
+                : days.stream()
+                    .filter(day -> day.projectedBalance().signum() < 0)
+                    .findFirst()
+                    .map(day -> createShortageAlert(today, day.date(), day.projectedBalance()))
+                    .orElse(null);
+
+            return new CashFlowForecast(
+                openingBalance,
+                expectedInflow,
+                expectedOutflow,
+                projectedBalance,
+                days,
+                shortageAlert);
     }
+
+            private CashShortageAlert createShortageAlert(
+                LocalDate today,
+                LocalDate shortageDate,
+                BigDecimal projectedBalance) {
+            long daysRemaining = ChronoUnit.DAYS.between(today, shortageDate);
+            String severity = daysRemaining <= 3 ? "CRITICAL" : daysRemaining <= 7 ? "HIGH" : "MEDIUM";
+            return new CashShortageAlert(projectedBalance.abs(), shortageDate, daysRemaining, severity);
+            }
 
     private LocalDate forecastDate(LocalDate dueDate, LocalDate firstDay) {
         return dueDate.isBefore(firstDay) ? firstDay : dueDate;

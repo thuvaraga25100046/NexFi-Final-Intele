@@ -850,6 +850,106 @@
   margin-bottom: 17px;
 }
 
+.cash-shortage-warning {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 17px;
+  padding: 16px 18px;
+  border: 1px solid #efc68b;
+  border-left: 4px solid #c77b19;
+  border-radius: 6px;
+  background: #fff8eb;
+  color: #52360f;
+}
+
+.cash-shortage-warning.severity-critical {
+  border-color: #e5a29a;
+  border-left-color: #bb493d;
+  background: #fff1ef;
+  color: #5e2822;
+}
+
+.cash-shortage-warning.severity-medium {
+  border-color: #d8d8a2;
+  border-left-color: #8a8c37;
+  background: #fbfbeF;
+  color: #44451f;
+}
+
+.cash-shortage-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(199 123 25 / 12%);
+  color: #a4610e;
+}
+
+.severity-critical .cash-shortage-icon {
+  background: rgb(187 73 61 / 12%);
+  color: #a5362b;
+}
+
+.severity-medium .cash-shortage-icon {
+  background: rgb(138 140 55 / 13%);
+  color: #73752b;
+}
+
+.cash-shortage-content {
+  min-width: 0;
+}
+
+.cash-shortage-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.cash-shortage-heading h2 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.cash-shortage-severity {
+  padding: 3px 7px;
+  border-radius: 3px;
+  background: rgb(199 123 25 / 12%);
+  color: #8c510a;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.severity-critical .cash-shortage-severity {
+  background: rgb(187 73 61 / 12%);
+  color: #a5362b;
+}
+
+.severity-medium .cash-shortage-severity {
+  background: rgb(138 140 55 / 13%);
+  color: #73752b;
+}
+
+.cash-shortage-summary {
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.cash-shortage-recommendations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin: 9px 0 0;
+  padding-left: 17px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .forecast-horizon {
   padding: 6px 8px;
   color: #58705f;

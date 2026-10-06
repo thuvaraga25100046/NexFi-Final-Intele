@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, TriangleAlert } from 'lucide-react'
 import ResourceState from './ResourceState.jsx'
 import useApiResource from '../hooks/useApiResource.js'
 import { fetchCashFlowForecast } from '../services/api.js'
@@ -46,36 +46,74 @@ function ForecastChart({ days, language, chartLabel, dateOptions }) {
   )
 }
 
+function CashShortageWarning({ alert, language, currency, t }) {
+  if (!alert) return null
+
+  const severityKey = alert.severity.toLowerCase()
+  const recommendations = [
+    'forecast.followUpReceivables',
+    'forecast.delayPayments',
+    'forecast.reduceExpenses',
+  ]
+
+  return (
+    <section className={`cash-shortage-warning severity-${severityKey}`} aria-labelledby="cash-shortage-title" role="alert">
+      <div className="cash-shortage-icon"><TriangleAlert size={19} /></div>
+      <div className="cash-shortage-content">
+        <div className="cash-shortage-heading">
+          <h2 id="cash-shortage-title">{t('forecast.shortageTitle')}</h2>
+          <span className="cash-shortage-severity">{t(`forecast.severity.${severityKey}`)}</span>
+        </div>
+        <p className="cash-shortage-summary">
+          {t('forecast.shortageSummary', {
+            amount: formatCurrency(alert.shortageAmount, language, currency),
+            date: formatDate(alert.shortageDate, language),
+            days: alert.daysRemaining,
+          })}
+        </p>
+        <ul className="cash-shortage-recommendations">
+          {recommendations.map((key) => <li key={key}>{t(key)}</li>)}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
 export default function CashFlowForecastPanel() {
   const { t, language, currency } = useTranslation()
   const forecast = useApiResource(fetchCashFlowForecast)
   const days = forecast.data?.days ?? []
 
   return (
-    <section className="workspace-panel cash-flow-forecast">
-      <div className="panel-heading">
-        <div><span className="panel-eyebrow">{t('forecast.eyebrow')}</span><h2>{t('forecast.title')}</h2></div>
-        <span className="forecast-horizon">{t('forecast.horizon')}</span>
-      </div>
-      <p className="forecast-description">{t('forecast.description')}</p>
-      <ResourceState
-        loading={forecast.loading}
-        error={forecast.error}
-        retry={forecast.retry}
-        empty={!days.length}
-        emptyTitle={t('forecast.empty')}
-      />
-      {!forecast.loading && !forecast.error && days.length > 0 && (
-        <>
-          <div className="forecast-totals">
-            <div className="forecast-total"><span>{t('forecast.openingCash')}</span><strong>{formatCurrency(forecast.data.openingBalance, language, currency)}</strong></div>
-            <div className="forecast-total forecast-inflow"><span><ArrowDownLeft size={13} /> {t('forecast.expectedIn')}</span><strong>{formatCurrency(forecast.data.expectedInflow, language, currency)}</strong></div>
-            <div className="forecast-total forecast-outflow"><span><ArrowUpRight size={13} /> {t('forecast.expectedOut')}</span><strong>{formatCurrency(forecast.data.expectedOutflow, language, currency)}</strong></div>
-            <div className="forecast-total forecast-projected"><span>{t('forecast.projectedEnd')}</span><strong>{formatCurrency(forecast.data.projectedBalance, language, currency)}</strong></div>
-          </div>
-          <ForecastChart days={days} language={language} chartLabel={t('forecast.chartLabel')} dateOptions={{ month: 'short', day: 'numeric' }} />
-        </>
+    <>
+      {!forecast.loading && !forecast.error && (
+        <CashShortageWarning alert={forecast.data?.shortageAlert} language={language} currency={currency} t={t} />
       )}
-    </section>
+      <section className="workspace-panel cash-flow-forecast">
+        <div className="panel-heading">
+          <div><span className="panel-eyebrow">{t('forecast.eyebrow')}</span><h2>{t('forecast.title')}</h2></div>
+          <span className="forecast-horizon">{t('forecast.horizon')}</span>
+        </div>
+        <p className="forecast-description">{t('forecast.description')}</p>
+        <ResourceState
+          loading={forecast.loading}
+          error={forecast.error}
+          retry={forecast.retry}
+          empty={!days.length}
+          emptyTitle={t('forecast.empty')}
+        />
+        {!forecast.loading && !forecast.error && days.length > 0 && (
+          <>
+            <div className="forecast-totals">
+              <div className="forecast-total"><span>{t('forecast.openingCash')}</span><strong>{formatCurrency(forecast.data.openingBalance, language, currency)}</strong></div>
+              <div className="forecast-total forecast-inflow"><span><ArrowDownLeft size={13} /> {t('forecast.expectedIn')}</span><strong>{formatCurrency(forecast.data.expectedInflow, language, currency)}</strong></div>
+              <div className="forecast-total forecast-outflow"><span><ArrowUpRight size={13} /> {t('forecast.expectedOut')}</span><strong>{formatCurrency(forecast.data.expectedOutflow, language, currency)}</strong></div>
+              <div className="forecast-total forecast-projected"><span>{t('forecast.projectedEnd')}</span><strong>{formatCurrency(forecast.data.projectedBalance, language, currency)}</strong></div>
+            </div>
+            <ForecastChart days={days} language={language} chartLabel={t('forecast.chartLabel')} dateOptions={{ month: 'short', day: 'numeric' }} />
+          </>
+        )}
+      </section>
+    </>
   )
 }

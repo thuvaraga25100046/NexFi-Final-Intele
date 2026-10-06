@@ -1,6 +1,7 @@
 package com.nexfi.nexfi.dashboard;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import com.nexfi.nexfi.payable.Payable;
@@ -53,10 +54,13 @@ public class DashboardSummaryService {
                 .filter(payable -> payable.getStatus() != PayableStatus.PAID)
                 .map(Payable::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal currentCashBalance = totalIncome
-                .subtract(totalExpenses)
-                .add(totalReceivables)
-                .subtract(totalPayables);
+        LocalDate today = LocalDate.now();
+        BigDecimal currentCashBalance = transactions.stream()
+                .filter(transaction -> !transaction.getTransactionDate().isAfter(today))
+                .map(transaction -> transaction.getType() == TransactionType.INCOME
+                        ? transaction.getAmount()
+                        : transaction.getAmount().negate())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new DashboardSummary(
                 currentCashBalance,
