@@ -4,6 +4,8 @@ import assert from 'node:assert/strict'
 import {
   normalizeApiError,
   resolveApiBaseUrl,
+  resolveMaxRetries,
+  resolveRetryDelay,
   resolveRequestTimeout,
 } from './apiConfig.js'
 
@@ -14,6 +16,13 @@ test('uses the Spring Boot URL by default', () => {
 test('uses the configured request timeout', () => {
   assert.equal(resolveRequestTimeout({ VITE_API_TIMEOUT_MS: '25000' }), 25000)
   assert.equal(resolveRequestTimeout({ VITE_API_TIMEOUT_MS: 'invalid' }), 15000)
+})
+
+test('uses the configured retry policy', () => {
+  assert.equal(resolveMaxRetries({ VITE_API_MAX_RETRIES: '4' }), 4)
+  assert.equal(resolveMaxRetries({ VITE_API_MAX_RETRIES: '-1' }), 2)
+  assert.equal(resolveRetryDelay({ VITE_API_RETRY_DELAY_MS: '250' }), 250)
+  assert.equal(resolveRetryDelay({ VITE_API_RETRY_DELAY_MS: 'invalid' }), 1000)
 })
 
 test('honors the Vite API base URL override', () => {

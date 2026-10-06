@@ -1,5 +1,7 @@
 const DEFAULT_API_BASE_URL = 'http://localhost:8080'
 const DEFAULT_REQUEST_TIMEOUT_MS = 15000
+const DEFAULT_MAX_RETRIES = 2
+const DEFAULT_RETRY_DELAY_MS = 1000
 
 export function resolveApiBaseUrl(env = import.meta.env ?? {}) {
   const baseUrl = env.VITE_API_BASE_URL?.trim()
@@ -9,6 +11,30 @@ export function resolveApiBaseUrl(env = import.meta.env ?? {}) {
 export function resolveRequestTimeout(env = import.meta.env ?? {}) {
   const timeout = Number(env.VITE_API_TIMEOUT_MS)
   return Number.isFinite(timeout) && timeout > 0 ? timeout : DEFAULT_REQUEST_TIMEOUT_MS
+}
+
+export function resolveMaxRetries(env = import.meta.env ?? {}) {
+  const retries = Number(env.VITE_API_MAX_RETRIES)
+  return Number.isInteger(retries) && retries >= 0 ? retries : DEFAULT_MAX_RETRIES
+}
+
+export function resolveRetryDelay(env = import.meta.env ?? {}) {
+  const delay = Number(env.VITE_API_RETRY_DELAY_MS)
+  return Number.isFinite(delay) && delay >= 0 ? delay : DEFAULT_RETRY_DELAY_MS
+}
+
+export function shouldRetryRequest(error, retryAttempt = 0, maxRetries = DEFAULT_MAX_RETRIES) {
+  if (retryAttempt >= maxRetries) return false
+
+  const status = error?.response?.status
+  const transientNetworkError =
+    error?.code === 'ERR_NETWORK' ||
+    error?.code === 'ECONNABORTED' ||
+    error?.code === 'ETIMEDOUT' ||
+    error?.name === 'TimeoutError' ||
+    (!error?.response && error?.name === 'AxiosError')
+
+  return transientNetworkError || status === 408 || status === 429 || (status >= 500 && status < 600)
 }
 
 export function normalizeApiError(error) {
