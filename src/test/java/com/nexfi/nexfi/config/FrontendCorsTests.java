@@ -16,21 +16,45 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 class FrontendCorsTests {
 
-    private static final String FRONTEND_ORIGIN = "http://localhost:5173";
+    private static final String[] FRONTEND_ORIGINS = {
+        "http://localhost:5173",
+        "http://localhost:5174"
+    };
+    private static final String[] API_PATHS = {
+        "/api/health",
+        "/api/transactions",
+        "/api/receivables",
+        "/api/payables"
+    };
+    private static final String[] API_METHODS = {
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+    };
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    void allowsPreflightRequestsFromFrontendForAllFinancialApis() throws Exception {
-        for (String path : new String[] { "/api/transactions", "/api/receivables", "/api/payables" }) {
-            mockMvc.perform(options(path)
-                            .header(HttpHeaders.ORIGIN, FRONTEND_ORIGIN)
-                            .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
-                            .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "content-type"))
+    void allowsPreflightRequestsFromConfiguredFrontendsForAllApis() throws Exception {
+        for (String origin : FRONTEND_ORIGINS) {
+            for (String path : API_PATHS) {
+            for (String method : API_METHODS) {
+                mockMvc.perform(options(path)
+                        .header(HttpHeaders.ORIGIN, origin)
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, method)
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS,
+                            "content-type,authorization,x-correlation-id"))
                     .andExpect(status().isOk())
-                    .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, FRONTEND_ORIGIN))
-                    .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, containsString("POST")));
+                    .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin))
+                    .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS,
+                        containsString(method)))
+                    .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
+                        containsString("x-correlation-id")));
+            }
+            }
         }
     }
 }
