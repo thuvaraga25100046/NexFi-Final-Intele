@@ -1,17 +1,21 @@
-import { ArrowDownLeft, ArrowUpRight, CalendarClock, ReceiptText, Wallet, WalletCards } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowDownLeft, ArrowUpRight, CalendarClock, PencilLine, ReceiptText, Wallet, WalletCards } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import MetricCard from '../components/MetricCard.jsx'
 import CashFlowForecastPanel from '../components/CashFlowForecastPanel.jsx'
+import OpeningBalanceModal from '../components/OpeningBalanceModal.jsx'
 import PageHeading from '../components/PageHeading.jsx'
 import ResourceState from '../components/ResourceState.jsx'
 import useApiResource from '../hooks/useApiResource.js'
-import { fetchDashboardSummary, fetchPayables, fetchReceivables, fetchTransactions } from '../services/api.js'
+import { fetchDashboardSummary, fetchOpeningBalance, fetchPayables, fetchReceivables, fetchTransactions } from '../services/api.js'
 import useTranslation from '../i18n/useTranslation.js'
 import { formatCurrency, formatDate } from '../i18n/formatters.js'
 
 export default function DashboardPage() {
   const { t, language, currency } = useTranslation()
+  const [openingBalanceDialogOpen, setOpeningBalanceDialogOpen] = useState(false)
   const summary = useApiResource(fetchDashboardSummary)
+  const openingBalance = useApiResource(fetchOpeningBalance)
   const transactions = useApiResource(fetchTransactions)
   const receivables = useApiResource(fetchReceivables)
   const payables = useApiResource(fetchPayables)
@@ -28,12 +32,37 @@ export default function DashboardPage() {
       <PageHeading eyebrow={t('dashboard.eyebrow')} title={t('dashboard.title')} description={t('dashboard.description')} />
 
       <div className="metrics-grid dashboard-metrics-grid">
-        <MetricCard icon={WalletCards} label={t('dashboard.cashBalance')} value={summaryValue('currentCashBalance')} note={summaryNote} tone="green" />
+        <MetricCard
+          action={(
+            <button
+              className="opening-balance-trigger"
+              disabled={openingBalance.loading || Boolean(openingBalance.error)}
+              onClick={() => setOpeningBalanceDialogOpen(true)}
+              type="button"
+            >
+              <PencilLine size={12} />
+              {openingBalance.data?.id ? t('openingBalance.edit') : t('openingBalance.set')}
+            </button>
+          )}
+          className="metric-card-with-action"
+          detail={`${t('openingBalance.contribution')}: ${openingBalance.loading ? '…' : openingBalance.error ? '—' : formatCurrency(openingBalance.data.amount, language, currency)}`}
+          icon={WalletCards}
+          label={t('dashboard.cashBalance')}
+          note={summaryNote}
+          tone="green"
+          value={summaryValue('currentCashBalance')}
+        />
         <MetricCard icon={ArrowDownLeft} label={t('dashboard.totalIncome')} value={summaryValue('totalIncome')} note={summaryNote} tone="green" />
         <MetricCard icon={ArrowUpRight} label={t('dashboard.totalExpenses')} value={summaryValue('totalExpenses')} note={summaryNote} tone="coral" />
         <MetricCard icon={CalendarClock} label={t('dashboard.totalReceivables')} value={summaryValue('totalReceivables')} note={summaryNote} tone="lime" />
         <MetricCard icon={ReceiptText} label={t('dashboard.totalPayables')} value={summaryValue('totalPayables')} note={summaryNote} tone="coral" />
       </div>
+      {openingBalanceDialogOpen && (
+        <OpeningBalanceModal
+          amount={openingBalance.data?.amount ?? 0}
+          onClose={() => setOpeningBalanceDialogOpen(false)}
+        />
+      )}
       {summary.error && <ResourceState loading={false} error={summary.error} retry={summary.retry} empty={false} />}
       <CashFlowForecastPanel />
 

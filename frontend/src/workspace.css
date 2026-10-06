@@ -143,6 +143,37 @@
   font-variant-numeric: tabular-nums;
 }
 
+.metric-detail {
+  margin-top: 3px;
+  color: #829087;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.metric-card-action {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.opening-balance-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  color: #2d6846;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.opening-balance-trigger:disabled {
+  color: #929e95;
+  cursor: wait;
+}
+
 .workspace-columns {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(280px, .85fr);
@@ -830,6 +861,10 @@
   padding: 14px;
 }
 
+.dashboard-metrics-grid .metric-card-with-action {
+  min-height: 170px;
+}
+
 .dashboard-metrics-grid .metric-value {
   font-size: 18px;
 }
@@ -1160,6 +1195,62 @@
   font-size: 11px;
 }
 
+.opening-balance-overlay {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(24 39 30 / 42%);
+}
+
+.opening-balance-dialog {
+  width: min(100%, 440px);
+  padding: 22px;
+  background: #fff;
+  border: 1px solid #e6ece6;
+  border-radius: 7px;
+  box-shadow: 0 20px 60px rgb(27 43 33 / 18%);
+}
+
+.opening-balance-dialog-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.opening-balance-dialog-heading h2 {
+  margin: 5px 0 0;
+  color: #2b4034;
+  font-family: 'Manrope', sans-serif;
+  font-size: 18px;
+}
+
+.opening-balance-description {
+  margin: 9px 0 18px;
+  color: #75837a;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.opening-balance-close {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  color: #65766b;
+  background: transparent;
+  border: 1px solid #dce5dc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.opening-balance-close:disabled {
+  cursor: wait;
+}
+
 .add-record-button {
   min-height: 42px;
   font-size: 11px;
@@ -1190,6 +1281,10 @@
   .dashboard-metrics-grid .metric-card {
     min-height: 116px;
     padding: 12px;
+  }
+
+  .dashboard-metrics-grid .metric-card-with-action {
+    min-height: 166px;
   }
 
   .dashboard-metrics-grid .metric-value {

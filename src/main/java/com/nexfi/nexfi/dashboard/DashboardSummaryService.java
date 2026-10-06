@@ -1,7 +1,6 @@
 package com.nexfi.nexfi.dashboard;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 import com.nexfi.nexfi.payable.Payable;
@@ -23,14 +22,17 @@ public class DashboardSummaryService {
     private final TransactionRepository transactionRepository;
     private final ReceivableRepository receivableRepository;
     private final PayableRepository payableRepository;
+        private final OpeningBalanceService openingBalanceService;
 
     public DashboardSummaryService(
             TransactionRepository transactionRepository,
             ReceivableRepository receivableRepository,
-            PayableRepository payableRepository) {
+                        PayableRepository payableRepository,
+                        OpeningBalanceService openingBalanceService) {
         this.transactionRepository = transactionRepository;
         this.receivableRepository = receivableRepository;
         this.payableRepository = payableRepository;
+                this.openingBalanceService = openingBalanceService;
     }
 
     public DashboardSummary getSummary() {
@@ -54,15 +56,15 @@ public class DashboardSummaryService {
                 .filter(payable -> payable.getStatus() != PayableStatus.PAID)
                 .map(Payable::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        LocalDate today = LocalDate.now();
-        BigDecimal currentCashBalance = transactions.stream()
-                .filter(transaction -> !transaction.getTransactionDate().isAfter(today))
-                .map(transaction -> transaction.getType() == TransactionType.INCOME
-                        ? transaction.getAmount()
-                        : transaction.getAmount().negate())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal openingBalance = openingBalanceService.getCurrent().getAmount();
+        BigDecimal currentCashBalance = openingBalance
+                .add(totalIncome)
+                .subtract(totalExpenses)
+                .add(totalReceivables)
+                .subtract(totalPayables);
 
         return new DashboardSummary(
+                openingBalance,
                 currentCashBalance,
                 totalIncome,
                 totalExpenses,

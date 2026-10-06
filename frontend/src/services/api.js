@@ -44,6 +44,13 @@ export const fetchReceivables = (signal) => apiGet('receivables', { signal })
 export const fetchPayables = (signal) => apiGet('payables', { signal })
 export const fetchDashboardSummary = (signal) => apiGet('dashboard/summary', { signal })
 export const fetchCashFlowForecast = (signal) => apiGet('dashboard/forecast', { signal })
+export const fetchOpeningBalance = (signal) => apiGet('opening-balance', { signal })
+
+export async function saveOpeningBalance(payload) {
+  const result = await apiPut('opening-balance', payload)
+  window.dispatchEvent(new Event(RESOURCE_CHANGED_EVENT))
+  return result
+}
 
 async function createResource(path, payload) {
   const result = await apiPost(path, payload)

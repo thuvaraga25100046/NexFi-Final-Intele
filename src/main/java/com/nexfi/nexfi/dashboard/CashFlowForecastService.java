@@ -27,14 +27,17 @@ public class CashFlowForecastService {
     private final TransactionRepository transactionRepository;
     private final ReceivableRepository receivableRepository;
     private final PayableRepository payableRepository;
+    private final OpeningBalanceService openingBalanceService;
 
     public CashFlowForecastService(
             TransactionRepository transactionRepository,
             ReceivableRepository receivableRepository,
-            PayableRepository payableRepository) {
+            PayableRepository payableRepository,
+            OpeningBalanceService openingBalanceService) {
         this.transactionRepository = transactionRepository;
         this.receivableRepository = receivableRepository;
         this.payableRepository = payableRepository;
+        this.openingBalanceService = openingBalanceService;
     }
 
     public CashFlowForecast getForecast() {
@@ -44,7 +47,7 @@ public class CashFlowForecastService {
         int forecastDays = Math.toIntExact(ChronoUnit.DAYS.between(today, lastDay));
         Map<LocalDate, BigDecimal> incomingByDate = new HashMap<>();
         Map<LocalDate, BigDecimal> outgoingByDate = new HashMap<>();
-        BigDecimal openingBalance = BigDecimal.ZERO;
+        BigDecimal openingBalance = openingBalanceService.getCurrent().getAmount();
 
         for (Transaction transaction : transactionRepository.findAll()) {
             if (!transaction.getTransactionDate().isAfter(today)) {

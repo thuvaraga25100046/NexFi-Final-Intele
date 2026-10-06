@@ -35,6 +35,9 @@ class DashboardSummaryControllerTests {
     @Autowired
     private PayableRepository payableRepository;
 
+    @Autowired
+    private OpeningBalanceRepository openingBalanceRepository;
+
     @BeforeEach
     @SuppressWarnings("unused")
     void clearFinancialRecords() {
@@ -51,6 +54,7 @@ class DashboardSummaryControllerTests {
         payableRepository.deleteAll();
         receivableRepository.deleteAll();
         transactionRepository.deleteAll();
+        openingBalanceRepository.deleteAll();
     }
 
     @Test
@@ -65,7 +69,8 @@ class DashboardSummaryControllerTests {
         mockMvc.perform(get("/api/dashboard/summary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.currentCashBalance").value(800.00))
+                .andExpect(jsonPath("$.data.openingBalance").value(0))
+                .andExpect(jsonPath("$.data.currentCashBalance").value(1000.00))
                 .andExpect(jsonPath("$.data.totalIncome").value(1000.00))
                 .andExpect(jsonPath("$.data.totalExpenses").value(200.00))
                 .andExpect(jsonPath("$.data.totalReceivables").value(300.00))
