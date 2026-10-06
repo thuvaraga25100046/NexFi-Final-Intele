@@ -7,6 +7,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -25,5 +26,8 @@ public record PayableRequest(
 
         @NotBlank(message = "status is required")
         @Pattern(regexp = "(?i)^(pending|paid|overdue)$", message = "status must be pending, paid, or overdue")
-        String status) {
+        String status,
+
+        @PastOrPresent(message = "paymentDate cannot be in the future")
+        LocalDate paymentDate) {
 }

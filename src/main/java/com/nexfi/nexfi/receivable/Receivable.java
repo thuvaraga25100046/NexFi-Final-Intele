@@ -29,6 +29,9 @@ public class Receivable {
     @Column(nullable = false)
     private LocalDate dueDate;
 
+    @Column(name = "payment_date")
+    private LocalDate paymentDate;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "receivable_status", nullable = false, length = 10)
     private ReceivableStatus status;
@@ -36,11 +39,13 @@ public class Receivable {
     protected Receivable() {
     }
 
-    public Receivable(String customerName, BigDecimal amount, LocalDate dueDate, ReceivableStatus status) {
+    public Receivable(String customerName, BigDecimal amount, LocalDate dueDate, ReceivableStatus status,
+            LocalDate paymentDate) {
         this.customerName = customerName;
         this.amount = amount;
         this.dueDate = dueDate;
         this.status = status;
+        this.paymentDate = paymentDate;
     }
 
     public Long getId() {
@@ -69,6 +74,14 @@ public class Receivable {
 
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public LocalDate getPaymentDate() {
+        return paymentDate;
+    }
+
+    public void setPaymentDate(LocalDate paymentDate) {
+        this.paymentDate = paymentDate;
     }
 
     public ReceivableStatus getStatus() {

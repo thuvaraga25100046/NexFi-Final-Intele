@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,9 +41,23 @@ class PayableControllerTests {
 
         mockMvc.perform(put("/api/payables/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"vendorName\":\"Office Supply Co\",\"amount\":100.00,\"dueDate\":\"2026-10-20\",\"status\":\"paid\",\"paymentDate\":\""
+                                + LocalDate.now().minusDays(1) + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("paid"))
+                .andExpect(jsonPath("$.data.paymentDate").value(LocalDate.now().minusDays(1).toString()));
+
+        mockMvc.perform(put("/api/payables/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"vendorName\":\"Office Supply Co\",\"amount\":100.00,\"dueDate\":\"2026-10-20\",\"status\":\"paid\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("paid"));
+                .andExpect(jsonPath("$.data.paymentDate").value(LocalDate.now().toString()));
+
+        mockMvc.perform(put("/api/payables/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"vendorName\":\"Office Supply Co\",\"amount\":100.00,\"dueDate\":\"2026-10-20\",\"status\":\"pending\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.paymentDate").value(org.hamcrest.Matchers.nullValue()));
 
         mockMvc.perform(get("/api/payables"))
                 .andExpect(status().isOk())
@@ -61,4 +77,14 @@ class PayableControllerTests {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
+
+        @Test
+        void rejectsFuturePaymentDate() throws Exception {
+                mockMvc.perform(post("/api/payables")
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content("{\"vendorName\":\"Office Supply Co\",\"amount\":100.00,\"dueDate\":\"2026-10-20\",\"status\":\"paid\",\"paymentDate\":\""
+                                                                + LocalDate.now().plusDays(1) + "\"}"))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.success").value(false));
+        }
 }

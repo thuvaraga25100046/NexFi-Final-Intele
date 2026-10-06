@@ -29,6 +29,9 @@ public class Payable {
     @Column(nullable = false)
     private LocalDate dueDate;
 
+    @Column(name = "payment_date")
+    private LocalDate paymentDate;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "payable_status", nullable = false, length = 10)
     private PayableStatus status;
@@ -36,11 +39,13 @@ public class Payable {
     protected Payable() {
     }
 
-    public Payable(String vendorName, BigDecimal amount, LocalDate dueDate, PayableStatus status) {
+    public Payable(String vendorName, BigDecimal amount, LocalDate dueDate, PayableStatus status,
+            LocalDate paymentDate) {
         this.vendorName = vendorName;
         this.amount = amount;
         this.dueDate = dueDate;
         this.status = status;
+        this.paymentDate = paymentDate;
     }
 
     public Long getId() {
@@ -69,6 +74,14 @@ public class Payable {
 
     public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public LocalDate getPaymentDate() {
+        return paymentDate;
+    }
+
+    public void setPaymentDate(LocalDate paymentDate) {
+        this.paymentDate = paymentDate;
     }
 
     public PayableStatus getStatus() {

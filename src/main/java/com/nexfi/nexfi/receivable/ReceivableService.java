@@ -1,5 +1,6 @@
 package com.nexfi.nexfi.receivable;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 
@@ -19,11 +20,13 @@ public class ReceivableService {
     }
 
     public Receivable create(ReceivableRequest request) {
+        ReceivableStatus status = parseStatus(request.status());
         Receivable receivable = new Receivable(
                 request.customerName().trim(),
                 request.amount(),
                 request.dueDate(),
-                parseStatus(request.status()));
+            status,
+            resolvePaymentDate(status, request.paymentDate()));
         return receivableRepository.save(receivable);
     }
 
@@ -43,7 +46,9 @@ public class ReceivableService {
         receivable.setCustomerName(request.customerName().trim());
         receivable.setAmount(request.amount());
         receivable.setDueDate(request.dueDate());
-        receivable.setStatus(parseStatus(request.status()));
+        ReceivableStatus status = parseStatus(request.status());
+        receivable.setStatus(status);
+        receivable.setPaymentDate(resolvePaymentDate(status, request.paymentDate()));
         return receivableRepository.save(receivable);
     }
 
@@ -53,5 +58,10 @@ public class ReceivableService {
 
     private ReceivableStatus parseStatus(String status) {
         return ReceivableStatus.valueOf(status.toUpperCase(Locale.ROOT));
+    }
+
+    private LocalDate resolvePaymentDate(ReceivableStatus status, LocalDate paymentDate) {
+        if (status != ReceivableStatus.PAID) return null;
+        return paymentDate != null ? paymentDate : LocalDate.now();
     }
 }

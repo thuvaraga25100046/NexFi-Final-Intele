@@ -27,6 +27,7 @@ const formConfig = {
       { name: 'amount', labelKey: 'forms.amount', type: 'number', min: '0.01', step: '0.01', placeholderKey: 'forms.amountPlaceholder' },
       { name: 'dueDate', labelKey: 'forms.dueDate', type: 'date', defaultValue: today },
       { name: 'status', labelKey: 'forms.status', type: 'select', options: [['pending', 'statuses.pending'], ['paid', 'statuses.paid'], ['overdue', 'statuses.overdue']] },
+      { name: 'paymentDate', labelKey: 'forms.paymentDate', type: 'date', defaultValue: today, max: today, paidOnly: true },
     ],
   },
   payable: {
@@ -38,6 +39,7 @@ const formConfig = {
       { name: 'amount', labelKey: 'forms.amount', type: 'number', min: '0.01', step: '0.01', placeholderKey: 'forms.amountPlaceholder' },
       { name: 'dueDate', labelKey: 'forms.dueDate', type: 'date', defaultValue: today },
       { name: 'status', labelKey: 'forms.status', type: 'select', options: [['pending', 'statuses.pending'], ['paid', 'statuses.paid'], ['overdue', 'statuses.overdue']] },
+      { name: 'paymentDate', labelKey: 'forms.paymentDate', type: 'date', defaultValue: today, max: today, paidOnly: true },
     ],
   },
 }
@@ -47,6 +49,7 @@ export default function CreateRecordForm({ kind, onCancel, onCreated }) {
   const config = formConfig[kind]
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [status, setStatus] = useState('pending')
 
   function handleInvalid(event) {
     const field = event.target
@@ -93,10 +96,17 @@ export default function CreateRecordForm({ kind, onCancel, onCreated }) {
       <div className="record-form-heading"><h2>{t(config.titleKey)}</h2><p>{t('forms.requiredHelp')}</p></div>
       <div className="record-form-fields">
         {config.fields.map((field) => (
+          field.paidOnly && status !== 'paid' ? null : (
           <label className={`record-field${field.name === 'description' ? ' record-field-wide' : ''}`} key={field.name}>
             <span>{t(field.labelKey)}</span>
             {field.type === 'select' ? (
-              <select data-label-key={field.labelKey} defaultValue={field.options[0][0]} name={field.name} required>
+              <select
+                data-label-key={field.labelKey}
+                defaultValue={field.options[0][0]}
+                name={field.name}
+                onChange={field.name === 'status' ? (event) => setStatus(event.target.value) : undefined}
+                required
+              >
                 {field.options.map(([value, labelKey]) => <option key={value} value={value}>{t(labelKey)}</option>)}
               </select>
             ) : (
@@ -104,6 +114,7 @@ export default function CreateRecordForm({ kind, onCancel, onCreated }) {
                 defaultValue={field.defaultValue}
                 data-label-key={field.labelKey}
                 maxLength={field.maxLength}
+                max={field.max}
                 min={field.min}
                 name={field.name}
                 placeholder={field.placeholderKey ? t(field.placeholderKey) : undefined}
@@ -113,6 +124,7 @@ export default function CreateRecordForm({ kind, onCancel, onCreated }) {
               />
             )}
           </label>
+          )
         ))}
       </div>
       {error && <p className="record-form-error" role="alert">{t('messages.error')}: {translateApiError(error, t)}</p>}

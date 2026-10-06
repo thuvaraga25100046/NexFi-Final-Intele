@@ -44,11 +44,12 @@ export default function PayablesPage() {
         {!loading && !error && filtered.length > 0 && (
           <div className="table-wrap">
             <table className="data-table full-table">
-              <thead><tr><th>{t('tables.vendor')}</th><th>{t('tables.dueDate')}</th><th>{t('tables.status')}</th><th className="align-right">{t('tables.amount')}</th></tr></thead>
+              <thead><tr><th>{t('tables.vendor')}</th><th>{t('tables.dueDate')}</th><th>{t('tables.paymentDate')}</th><th>{t('tables.status')}</th><th className="align-right">{t('tables.amount')}</th></tr></thead>
               <tbody>{filtered.map((item) => (
                 <tr key={item.id}>
                   <td><span className="table-customer"><span className="customer-avatar">{item.vendorName.slice(0, 1).toUpperCase()}</span><strong>{item.vendorName}</strong></span></td>
                   <td><span className="date-cell"><CalendarDays size={14} />{formatDate(item.dueDate, language)}</span></td>
+                  <td>{item.paymentDate ? formatDate(item.paymentDate, language) : t('tables.notRecorded')}</td>
                   <td><span className={`status-badge status-${item.status}`}>{t(`statuses.${item.status}`)}</span></td>
                   <td className="align-right">{formatCurrency(item.amount, language)}</td>
                 </tr>

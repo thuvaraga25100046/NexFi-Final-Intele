@@ -1,5 +1,6 @@
 package com.nexfi.nexfi.payable;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 
@@ -19,11 +20,13 @@ public class PayableService {
     }
 
     public Payable create(PayableRequest request) {
+        PayableStatus status = parseStatus(request.status());
         Payable payable = new Payable(
                 request.vendorName().trim(),
                 request.amount(),
                 request.dueDate(),
-                parseStatus(request.status()));
+            status,
+            resolvePaymentDate(status, request.paymentDate()));
         return payableRepository.save(payable);
     }
 
@@ -43,7 +46,9 @@ public class PayableService {
         payable.setVendorName(request.vendorName().trim());
         payable.setAmount(request.amount());
         payable.setDueDate(request.dueDate());
-        payable.setStatus(parseStatus(request.status()));
+        PayableStatus status = parseStatus(request.status());
+        payable.setStatus(status);
+        payable.setPaymentDate(resolvePaymentDate(status, request.paymentDate()));
         return payableRepository.save(payable);
     }
 
@@ -53,5 +58,10 @@ public class PayableService {
 
     private PayableStatus parseStatus(String status) {
         return PayableStatus.valueOf(status.toUpperCase(Locale.ROOT));
+    }
+
+    private LocalDate resolvePaymentDate(PayableStatus status, LocalDate paymentDate) {
+        if (status != PayableStatus.PAID) return null;
+        return paymentDate != null ? paymentDate : LocalDate.now();
     }
 }

@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,9 +41,23 @@ class ReceivableControllerTests {
 
         mockMvc.perform(put("/api/receivables/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"customerName\":\"Acme Ltd\",\"amount\":1300.00,\"dueDate\":\"2026-11-10\",\"status\":\"paid\",\"paymentDate\":\""
+                                + LocalDate.now().minusDays(1) + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("paid"))
+                .andExpect(jsonPath("$.data.paymentDate").value(LocalDate.now().minusDays(1).toString()));
+
+        mockMvc.perform(put("/api/receivables/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"customerName\":\"Acme Ltd\",\"amount\":1300.00,\"dueDate\":\"2026-11-10\",\"status\":\"paid\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("paid"));
+                .andExpect(jsonPath("$.data.paymentDate").value(LocalDate.now().toString()));
+
+        mockMvc.perform(put("/api/receivables/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"customerName\":\"Acme Ltd\",\"amount\":1300.00,\"dueDate\":\"2026-11-10\",\"status\":\"pending\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.paymentDate").value(org.hamcrest.Matchers.nullValue()));
 
         mockMvc.perform(get("/api/receivables"))
                 .andExpect(status().isOk())
@@ -61,4 +77,14 @@ class ReceivableControllerTests {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
+
+        @Test
+        void rejectsFuturePaymentDate() throws Exception {
+                mockMvc.perform(post("/api/receivables")
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content("{\"customerName\":\"Acme Ltd\",\"amount\":100.00,\"dueDate\":\"2026-11-01\",\"status\":\"paid\",\"paymentDate\":\""
+                                                                + LocalDate.now().plusDays(1) + "\"}"))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.success").value(false));
+        }
 }

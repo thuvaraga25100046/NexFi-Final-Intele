@@ -129,10 +129,14 @@ class DashboardSummaryControllerTests {
     }
 
     private void createReceivable(String amount, String status, LocalDate dueDate) throws Exception {
+        String paymentDate = "paid".equalsIgnoreCase(status)
+            ? ",\"paymentDate\":\"" + LocalDate.now() + "\""
+            : "";
         mockMvc.perform(post("/api/receivables")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"customerName\":\"Test Customer\",\"amount\":" + amount
-                                + ",\"dueDate\":\"" + dueDate + "\",\"status\":\"" + status + "\"}"))
+                    + ",\"dueDate\":\"" + dueDate + "\",\"status\":\"" + status + "\""
+                    + paymentDate + "}"))
                 .andExpect(status().isCreated());
     }
 
@@ -141,10 +145,14 @@ class DashboardSummaryControllerTests {
     }
 
     private void createPayable(String amount, String status, LocalDate dueDate) throws Exception {
+        String paymentDate = "paid".equalsIgnoreCase(status)
+            ? ",\"paymentDate\":\"" + LocalDate.now() + "\""
+            : "";
         mockMvc.perform(post("/api/payables")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"vendorName\":\"Test Vendor\",\"amount\":" + amount
-                                + ",\"dueDate\":\"" + dueDate + "\",\"status\":\"" + status + "\"}"))
+                    + ",\"dueDate\":\"" + dueDate + "\",\"status\":\"" + status + "\""
+                    + paymentDate + "}"))
                 .andExpect(status().isCreated());
     }
 }
