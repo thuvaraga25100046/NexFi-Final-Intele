@@ -1,11 +1,12 @@
 import axios from 'axios'
-import { normalizeApiError, resolveApiBaseUrl } from './apiConfig.js'
+import { normalizeApiError, resolveApiBaseUrl, resolveRequestTimeout } from './apiConfig.js'
 
 export const API_BASE_URL = resolveApiBaseUrl()
+export const REQUEST_TIMEOUT_MS = resolveRequestTimeout()
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: REQUEST_TIMEOUT_MS,
   headers: {
     Accept: 'application/json',
   },
@@ -13,6 +14,7 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use((config) => {
   config.headers.Accept = 'application/json'
+  config.headers['Content-Type'] = config.data ? 'application/json' : config.headers['Content-Type']
   return config
 })
 
@@ -21,11 +23,4 @@ apiClient.interceptors.response.use(
   (error) => Promise.reject(normalizeApiError(error)),
 )
 
-export async function checkBackendHealth(signal) {
-  const response = await apiClient.get('/api/health', { signal })
-  const health = response.data?.data?.status
-  if (health !== 'UP') {
-    throw new Error('NexFi backend health check failed.')
-  }
-  return response.data
-}
+export { normalizeApiError } from './apiConfig.js'

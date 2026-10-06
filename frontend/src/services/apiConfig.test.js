@@ -4,10 +4,16 @@ import assert from 'node:assert/strict'
 import {
   normalizeApiError,
   resolveApiBaseUrl,
+  resolveRequestTimeout,
 } from './apiConfig.js'
 
 test('uses the Spring Boot URL by default', () => {
   assert.equal(resolveApiBaseUrl({}), 'http://localhost:8080')
+})
+
+test('uses the configured request timeout', () => {
+  assert.equal(resolveRequestTimeout({ VITE_API_TIMEOUT_MS: '25000' }), 25000)
+  assert.equal(resolveRequestTimeout({ VITE_API_TIMEOUT_MS: 'invalid' }), 15000)
 })
 
 test('honors the Vite API base URL override', () => {
