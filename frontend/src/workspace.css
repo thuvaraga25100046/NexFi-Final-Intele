@@ -622,6 +622,23 @@
   font-size: 9px;
 }
 
+.backend-status-banner {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 46px;
+  color: #9a4b3f;
+  background: #fff1ed;
+  border-bottom: 1px solid #f2d2c9;
+  font-size: 10px;
+}
+
+.backend-status-banner small {
+  margin-left: auto;
+  color: #a47a70;
+}
+
 .workspace-footer {
   background: #fff;
   border-top: 1px solid #e7ece6;

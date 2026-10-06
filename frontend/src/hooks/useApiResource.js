@@ -14,7 +14,7 @@ export default function useApiResource(loader) {
       })
       .catch((requestError) => {
         if (!controller.signal.aborted && requestError.name !== 'AbortError') {
-          setResult({ attempt, data: [], error: requestError.message || 'Unable to load this data.' })
+          setResult({ attempt, data: [], error: requestError.message || '' })
         }
       })
 
