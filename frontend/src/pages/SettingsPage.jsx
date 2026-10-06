@@ -5,8 +5,7 @@ import useTranslation from '../i18n/useTranslation.js'
 import { languageNames } from '../i18n/translations.js'
 
 export default function SettingsPage() {
-  const { t, language, setLanguage } = useTranslation()
-  const [currency, setCurrency] = useState('USD')
+  const { t, language, setLanguage, currency, setCurrency } = useTranslation()
   const [weeklySummary, setWeeklySummary] = useState(true)
 
   return (
@@ -28,7 +27,7 @@ export default function SettingsPage() {
           </label>
           <label className="settings-row" htmlFor="currency-select"><span><strong>{t('settings.currency')}</strong><small>{t('settings.currencyDescription')}</small></span>
             <select className="settings-select" id="currency-select" onChange={(event) => setCurrency(event.target.value)} value={currency}>
-              <option value="USD">USD · {t('currency.usd')}</option><option value="EUR">EUR · {t('currency.eur')}</option><option value="GBP">GBP · {t('currency.gbp')}</option>
+              <option value="LKR">LKR · {t('currency.lkr')}</option><option value="USD">USD · {t('currency.usd')}</option><option value="EUR">EUR · {t('currency.eur')}</option><option value="GBP">GBP · {t('currency.gbp')}</option>
             </select>
           </label>
           <div className="settings-row"><span className="settings-label-icon"><Bell size={16} /><span><strong>{t('settings.weeklySummary')}</strong><small>{t('settings.weeklySummaryDescription')}</small></span></span>

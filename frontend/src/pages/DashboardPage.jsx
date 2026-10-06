@@ -10,7 +10,7 @@ import useTranslation from '../i18n/useTranslation.js'
 import { formatCurrency, formatDate } from '../i18n/formatters.js'
 
 export default function DashboardPage() {
-  const { t, language } = useTranslation()
+  const { t, language, currency } = useTranslation()
   const summary = useApiResource(fetchDashboardSummary)
   const transactions = useApiResource(fetchTransactions)
   const receivables = useApiResource(fetchReceivables)
@@ -20,7 +20,7 @@ export default function DashboardPage() {
   const recentTransactions = [...transactions.data].sort((a, b) => b.transactionDate.localeCompare(a.transactionDate)).slice(0, 5)
   const upcomingReceivables = [...openReceivables].sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 4)
   const upcomingPayables = [...openPayables].sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 4)
-  const summaryValue = (field) => summary.loading ? '…' : summary.error ? '—' : formatCurrency(summary.data[field], language)
+  const summaryValue = (field) => summary.loading ? '…' : summary.error ? '—' : formatCurrency(summary.data[field], language, currency)
   const summaryNote = summary.error ? t('messages.unavailable') : summary.loading ? t('messages.loading') : t('messages.liveSummary')
 
   return (
@@ -53,7 +53,7 @@ export default function DashboardPage() {
                     <td><strong>{item.category}</strong><small>{item.description || '—'}</small></td>
                     <td>{formatDate(item.transactionDate, language)}</td>
                     <td><span className={`type-badge type-${item.type}`}>{t(`types.${item.type}`)}</span></td>
-                    <td className={`align-right amount-${item.type}`}>{formatCurrency(item.amount, language)}</td>
+                    <td className={`align-right amount-${item.type}`}>{formatCurrency(item.amount, language, currency)}</td>
                   </tr>
                 ))}</tbody>
               </table>
@@ -74,7 +74,7 @@ export default function DashboardPage() {
                   <div className="receivable-row" key={item.id}>
                     <span className="customer-avatar">{item.customerName.slice(0, 1).toUpperCase()}</span>
                     <span className="receivable-customer"><strong>{item.customerName}</strong><small>{t('messages.due', { date: formatDate(item.dueDate, language) })}</small></span>
-                    <strong className="receivable-amount">{formatCurrency(item.amount, language)}</strong>
+                    <strong className="receivable-amount">{formatCurrency(item.amount, language, currency)}</strong>
                   </div>
                 ))}
               </div>
@@ -93,7 +93,7 @@ export default function DashboardPage() {
                   <div className="receivable-row" key={item.id}>
                     <span className="customer-avatar">{item.vendorName.slice(0, 1).toUpperCase()}</span>
                     <span className="receivable-customer"><strong>{item.vendorName}</strong><small>{t('messages.due', { date: formatDate(item.dueDate, language) })}</small></span>
-                    <strong className="receivable-amount">{formatCurrency(item.amount, language)}</strong>
+                    <strong className="receivable-amount">{formatCurrency(item.amount, language, currency)}</strong>
                   </div>
                 ))}
               </div>

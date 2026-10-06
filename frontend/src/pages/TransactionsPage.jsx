@@ -9,7 +9,7 @@ import useTranslation from '../i18n/useTranslation.js'
 import { formatCurrency, formatDate } from '../i18n/formatters.js'
 
 export default function TransactionsPage() {
-  const { t, language } = useTranslation()
+  const { t, language, currency } = useTranslation()
   const { data, loading, error, retry } = useApiResource(fetchTransactions)
   const [filter, setFilter] = useState('all')
   const [createOpen, setCreateOpen] = useState(false)
@@ -50,7 +50,7 @@ export default function TransactionsPage() {
                   <td>{item.description || '—'}</td>
                   <td>{formatDate(item.transactionDate, language)}</td>
                   <td><span className={`type-badge type-${item.type}`}>{item.type === 'income' ? <ArrowDownLeft size={12} /> : <ArrowUpRight size={12} />}{t(`types.${item.type}`)}</span></td>
-                  <td className={`align-right amount-${item.type}`}>{formatCurrency(item.amount, language)}</td>
+                  <td className={`align-right amount-${item.type}`}>{formatCurrency(item.amount, language, currency)}</td>
                 </tr>
               ))}</tbody>
             </table>

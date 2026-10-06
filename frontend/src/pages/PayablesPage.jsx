@@ -9,7 +9,7 @@ import useTranslation from '../i18n/useTranslation.js'
 import { formatCurrency, formatDate } from '../i18n/formatters.js'
 
 export default function PayablesPage() {
-  const { t, language } = useTranslation()
+  const { t, language, currency } = useTranslation()
   const { data, loading, error, retry } = useApiResource(fetchPayables)
   const [filter, setFilter] = useState('all')
   const [createOpen, setCreateOpen] = useState(false)
@@ -51,7 +51,7 @@ export default function PayablesPage() {
                   <td><span className="date-cell"><CalendarDays size={14} />{formatDate(item.dueDate, language)}</span></td>
                   <td>{item.paymentDate ? formatDate(item.paymentDate, language) : t('tables.notRecorded')}</td>
                   <td><span className={`status-badge status-${item.status}`}>{t(`statuses.${item.status}`)}</span></td>
-                  <td className="align-right">{formatCurrency(item.amount, language)}</td>
+                  <td className="align-right">{formatCurrency(item.amount, language, currency)}</td>
                 </tr>
               ))}</tbody>
             </table>

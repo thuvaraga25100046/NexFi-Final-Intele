@@ -47,7 +47,7 @@ function ForecastChart({ days, language, chartLabel, dateOptions }) {
 }
 
 export default function CashFlowForecastPanel() {
-  const { t, language } = useTranslation()
+  const { t, language, currency } = useTranslation()
   const forecast = useApiResource(fetchCashFlowForecast)
   const days = forecast.data?.days ?? []
 
@@ -68,10 +68,10 @@ export default function CashFlowForecastPanel() {
       {!forecast.loading && !forecast.error && days.length > 0 && (
         <>
           <div className="forecast-totals">
-            <div className="forecast-total"><span>{t('forecast.openingCash')}</span><strong>{formatCurrency(forecast.data.openingBalance, language)}</strong></div>
-            <div className="forecast-total forecast-inflow"><span><ArrowDownLeft size={13} /> {t('forecast.expectedIn')}</span><strong>{formatCurrency(forecast.data.expectedInflow, language)}</strong></div>
-            <div className="forecast-total forecast-outflow"><span><ArrowUpRight size={13} /> {t('forecast.expectedOut')}</span><strong>{formatCurrency(forecast.data.expectedOutflow, language)}</strong></div>
-            <div className="forecast-total forecast-projected"><span>{t('forecast.projectedEnd')}</span><strong>{formatCurrency(forecast.data.projectedBalance, language)}</strong></div>
+            <div className="forecast-total"><span>{t('forecast.openingCash')}</span><strong>{formatCurrency(forecast.data.openingBalance, language, currency)}</strong></div>
+            <div className="forecast-total forecast-inflow"><span><ArrowDownLeft size={13} /> {t('forecast.expectedIn')}</span><strong>{formatCurrency(forecast.data.expectedInflow, language, currency)}</strong></div>
+            <div className="forecast-total forecast-outflow"><span><ArrowUpRight size={13} /> {t('forecast.expectedOut')}</span><strong>{formatCurrency(forecast.data.expectedOutflow, language, currency)}</strong></div>
+            <div className="forecast-total forecast-projected"><span>{t('forecast.projectedEnd')}</span><strong>{formatCurrency(forecast.data.projectedBalance, language, currency)}</strong></div>
           </div>
           <ForecastChart days={days} language={language} chartLabel={t('forecast.chartLabel')} dateOptions={{ month: 'short', day: 'numeric' }} />
         </>

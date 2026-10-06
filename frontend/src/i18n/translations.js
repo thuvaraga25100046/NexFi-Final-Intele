@@ -1,4 +1,5 @@
 export const supportedLanguages = ['en', 'ta', 'si']
+export const supportedCurrencies = ['LKR', 'USD', 'EUR', 'GBP']
 
 export const languageNames = {
   en: 'English',
@@ -52,6 +53,7 @@ export const translations = {
     'settings.preferencesDescription': 'Choose how your information is displayed.',
     'settings.currency': 'Display currency',
     'settings.currencyDescription': 'Used for amounts across NexFi',
+    'currency.lkr': 'Sri Lankan Rupee',
     'currency.usd': 'US Dollar',
     'currency.eur': 'Euro',
     'currency.gbp': 'British Pound',
@@ -231,6 +233,7 @@ export const translations = {
     'settings.preferencesDescription': 'உங்கள் தகவல் எவ்வாறு காட்டப்பட வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும்.',
     'settings.currency': 'காட்டப்படும் நாணயம்',
     'settings.currencyDescription': 'NexFi முழுவதும் தொகைகளுக்குப் பயன்படுத்தப்படும்',
+    'currency.lkr': 'இலங்கை ரூபாய்',
     'currency.usd': 'அமெரிக்க டாலர்',
     'currency.eur': 'யூரோ',
     'currency.gbp': 'பிரிட்டிஷ் பவுண்ட்',
@@ -408,6 +411,7 @@ export const translations = {
     'settings.preferencesDescription': 'ඔබේ තොරතුරු පෙන්විය යුතු ආකාරය තෝරන්න.',
     'settings.currency': 'පෙන්වන මුදල් ඒකකය',
     'settings.currencyDescription': 'NexFi හි මුදල් ප්‍රමාණ සඳහා භාවිත වේ',
+    'currency.lkr': 'ශ්‍රී ලංකා රුපියල්',
     'currency.usd': 'ඇමරිකානු ඩොලරය',
     'currency.eur': 'යුරෝ',
     'currency.gbp': 'බ්‍රිතාන්‍ය පවුම',
