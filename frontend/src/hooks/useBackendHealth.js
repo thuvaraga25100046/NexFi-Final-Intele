@@ -1,29 +1,39 @@
 import { useEffect, useState } from 'react'
 import { checkBackendHealth } from '../services/api.js'
+import { isBackendUnreachable } from '../services/apiConfig.js'
 
 export default function useBackendHealth({ intervalMs = 30000 } = {}) {
   const [status, setStatus] = useState('checking')
   const [lastCheckedAt, setLastCheckedAt] = useState(null)
 
   useEffect(() => {
-    const controller = new AbortController()
+    let active = true
+    let interval
+    let controller
 
     async function check() {
+      controller = new AbortController()
       try {
         await checkBackendHealth(controller.signal)
-        setStatus('healthy')
+        if (active) setStatus('healthy')
       } catch (error) {
-        if (error.name !== 'AbortError') setStatus('unavailable')
+        const wasCanceled = controller.signal.aborted || error?.code === 'ERR_CANCELED' || error?.name === 'AbortError'
+        if (active && !wasCanceled) {
+          setStatus(isBackendUnreachable(error) ? 'unavailable' : 'healthy')
+        }
       } finally {
-        if (!controller.signal.aborted) setLastCheckedAt(new Date())
+        if (active) {
+          setLastCheckedAt(new Date())
+          interval = window.setTimeout(check, intervalMs)
+        }
       }
     }
 
     check()
-    const interval = window.setInterval(check, intervalMs)
     return () => {
+      active = false
+      window.clearTimeout(interval)
       controller.abort()
-      window.clearInterval(interval)
     }
   }, [intervalMs])
 

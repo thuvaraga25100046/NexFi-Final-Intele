@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import {
+  isBackendUnreachable,
   normalizeApiError,
   resolveApiBaseUrl,
   resolveMaxRetries,
@@ -40,6 +41,31 @@ test('normalizes network failures to a stable backend-unavailable message', () =
   })
 
   assert.equal(error.message, 'NexFi could not reach the backend. Please check that Spring Boot is running on localhost:8080 and try again.')
+})
+
+test('preserves request cancellation instead of reporting it as a backend failure', () => {
+  const cancellation = Object.assign(new Error('canceled'), {
+    name: 'CanceledError',
+    code: 'ERR_CANCELED',
+  })
+
+  assert.equal(normalizeApiError(cancellation), cancellation)
+})
+
+test('only classifies transport failures as an unreachable backend', () => {
+  const networkError = normalizeApiError({
+    name: 'AxiosError',
+    code: 'ERR_NETWORK',
+    message: 'Network Error',
+  })
+  const serverResponseError = normalizeApiError({
+    name: 'AxiosError',
+    response: { status: 503 },
+  })
+
+  assert.equal(isBackendUnreachable(networkError), true)
+  assert.equal(isBackendUnreachable(serverResponseError), false)
+  assert.equal(isBackendUnreachable(new Error('Health status is DOWN')), false)
 })
 
 test('preserves backend-provided API messages', () => {

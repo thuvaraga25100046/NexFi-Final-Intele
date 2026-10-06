@@ -37,30 +37,48 @@ export function shouldRetryRequest(error, retryAttempt = 0, maxRetries = DEFAULT
   return transientNetworkError || status === 408 || status === 429 || (status >= 500 && status < 600)
 }
 
+export function isBackendUnreachable(error) {
+  const sourceError = error?.cause ?? error
+  if (sourceError?.response) return false
+
+  return (
+    sourceError?.code === 'ERR_NETWORK' ||
+    sourceError?.code === 'ECONNABORTED' ||
+    sourceError?.code === 'ETIMEDOUT' ||
+    sourceError?.name === 'TimeoutError' ||
+    sourceError?.name === 'AxiosError'
+  )
+}
+
 export function normalizeApiError(error) {
+  if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError' || error?.name === 'AbortError') {
+    return error
+  }
+
   const responseMessage = error?.response?.data?.message
   if (responseMessage) {
-    return new Error(String(responseMessage))
+    return new Error(String(responseMessage), { cause: error })
   }
 
   const status = error?.response?.status
   if (error?.code === 'ECONNABORTED' || error?.name === 'TimeoutError') {
-    return new Error('The NexFi backend took too long to respond. Please try again.')
+    return new Error('The NexFi backend took too long to respond. Please try again.', { cause: error })
   }
 
   if (status === 408 || status === 429) {
-    return new Error('The backend is temporarily unavailable. Please wait a moment and try again.')
+    return new Error('The backend is temporarily unavailable. Please wait a moment and try again.', { cause: error })
   }
 
   if (error?.code === 'ERR_NETWORK' || error?.name === 'AxiosError' && !error.response) {
     return new Error(
       'NexFi could not reach the backend. Please check that Spring Boot is running on localhost:8080 and try again.',
+      { cause: error },
     )
   }
 
   if (status >= 500) {
-    return new Error('The backend is currently unavailable. Please try again shortly.')
+    return new Error('The backend is currently unavailable. Please try again shortly.', { cause: error })
   }
 
-  return new Error(error?.message || 'NexFi could not complete the request.')
+  return new Error(error?.message || 'NexFi could not complete the request.', { cause: error })
 }
