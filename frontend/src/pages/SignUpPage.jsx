@@ -1,58 +1,66 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Mail,
   Lock,
   Eye,
   EyeOff,
-  Users,
+  User,
+  AtSign,
   Globe,
   ShieldCheck,
 } from 'lucide-react'
-import { useTranslation } from '../i18n/useTranslation.js'
+import useTranslation from '../i18n/useTranslation.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { Link } from 'react-router-dom'
 
-function PasswordToggle({ showPassword, setShowPassword, iconEye, iconEyeOff }) {
-  return (
-    <div className="relative">
-      <input
-        type={showPassword ? "text" : "password"}
-        id="password"
-        name="password"
-        autoComplete="current-password"
-        required
-        className="w-full pl-10 pr-12 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 dark:text-slate-100 shadow-sm transition-colors focus-outline focus:border-indigo-500/50"
-      />
-      <button
-        onClick={() => setShowPassword(!showPassword)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-        aria-label={showPassword ? 'Hide password' : 'Show password'}
-      >
-        {showPassword ? <iconEyeOff size={18} /> : <iconEye size={18} />}
-      </button>
-    </div>
-  )
-}
-
-function InputWithIcon({ icon, type, name, placeholder, ...rest }) {
+function InputWithIcon({ icon: Icon, type, name, placeholder, value, onChange, ...rest }) {
   return (
     <div className="relative">
       <input
         type={type}
         name={name}
-        className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 dark:text-slate-100 shadow-sm transition-colors focus-outline focus:border-indigo-500/50"
+        value={value}
+        onChange={onChange}
+        className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 text-slate-100 placeholder-slate-400 shadow-sm transition-colors focus:outline-none focus:border-indigo-500/80"
         placeholder={placeholder}
         {...rest}
       />
-      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
-        <icon className="size-4" />
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
+        <Icon className="size-4" />
       </div>
     </div>
   )
 }
 
+function PasswordInputWithToggle({ icon: Icon, name, placeholder, value, onChange, showPassword, setShowPassword }) {
+  return (
+    <div className="relative">
+      <input
+        type={showPassword ? 'text' : 'password'}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full pl-10 pr-12 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 text-slate-100 placeholder-slate-400 shadow-sm transition-colors focus:outline-none focus:border-indigo-500/80"
+        placeholder={placeholder}
+        required
+      />
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
+        <Icon className="size-4" />
+      </div>
+      <button
+        type="button"
+        onClick={() => setShowPassword(!showPassword)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+        aria-label={showPassword ? 'Hide password' : 'Show password'}
+      >
+        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+      </button>
+    </div>
+  )
+}
+
 function SignUpPage() {
-  const { t, language } = useTranslation()
+  const { t } = useTranslation()
   const [formData, setFormData] = useState({
     fullName: '',
     username: '',
@@ -62,6 +70,7 @@ function SignUpPage() {
   })
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const { register } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -80,32 +89,34 @@ function SignUpPage() {
 
     const { fullName, username, email, password, confirmPassword } = formData
 
+    let currentErrors = {}
+
     // Validation
     if (!fullName.trim()) {
-      setErrors((prev) => ({ ...prev, fullName: t('auth.fullNameRequired') }))
+      currentErrors.fullName = t('auth.fullNameRequired')
     }
     if (!username.trim()) {
-      setErrors((prev) => ({ ...prev, username: t('auth.usernameRequired') }))
+      currentErrors.username = t('auth.usernameRequired')
     }
     if (!email.trim()) {
-      setErrors((prev) => ({ ...prev, email: t('auth.emailRequired') }))
+      currentErrors.email = t('auth.emailRequired')
     }
     if (!password) {
-      setErrors((prev) => ({ ...prev, password: t('auth.passwordRequired') }))
+      currentErrors.password = t('auth.passwordRequired')
     } else if (password.length < 6) {
-      setErrors((prev) => ({ ...prev, password: t('auth.passwordMinLength') }))
+      currentErrors.password = t('auth.passwordMinLength')
     }
     if (password !== confirmPassword) {
-      setErrors((prev) => ({ ...prev, confirmPassword: t('auth.passwordsDoNotMatch') }))
+      currentErrors.confirmPassword = t('auth.passwordsDoNotMatch')
     }
 
-    // If there are validation errors, stop here
-    const hasErrors = Object.values(errors).some((e) => e)
-    if (hasErrors || isSubmitting) return
+    if (Object.keys(currentErrors).length > 0) {
+      setErrors(currentErrors)
+      return
+    }
 
     setIsSubmitting(true)
     const result = register(fullName, email, password)
-
     setIsSubmitting(false)
 
     if (result.success) {
@@ -118,7 +129,6 @@ function SignUpPage() {
     }
   }
 
-  // Clear success state after navigating
   useEffect(() => {
     if (showSuccess) {
       const timeout = setTimeout(() => setShowSuccess(false), 3000)
@@ -127,21 +137,19 @@ function SignUpPage() {
   }, [showSuccess])
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <div class="max-w-md w-full mx-auto px-4 py-8">
-        {/* Header with gradient background */}
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="max-w-md w-full mx-auto px-4 py-8">
+        {/* Header */}
         <div className="text-center mb-8">
-          <div className="relative">
-            <div
-              className="absolute -inset-1/2 bg-indigo-500/20 -z-10 rounded-2xl opacity-75 blur-lg"
-            />
+          <div className="relative inline-block">
+            <div className="absolute -inset-1/2 bg-indigo-500/20 -z-10 rounded-2xl opacity-75 blur-lg" />
             <h2 className="text-2xl font-bold text-slate-100 mb-2">
               {t('auth.signUp')}
             </h2>
-            <p className="text-slate-400 text-sm">
-              {t('auth.createYourAccount')}
-            </p>
           </div>
+          <p className="text-slate-400 text-sm">
+            {t('auth.createYourAccount')}
+          </p>
           {showSuccess && (
             <div className="mt-4 rounded-xl bg-emerald-600/20 text-emerald-400 text-sm p-3">
               {t('auth.registrationSuccess')}
@@ -161,87 +169,86 @@ function SignUpPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Full Name */}
-          <InputWithIcon
-            icon={Users}
-            type="text"
-            name="fullName"
-            placeholder={t('auth.fullNamePlaceholder')}
-            required
-            onChange={handleChange}
-          />
-          {errors.fullName && (
-            <p className="mt-1 text-xs text-rose-400">{errors.fullName}</p>
-          )}
+          <div>
+            <InputWithIcon
+              icon={User}
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              placeholder={t('auth.fullNamePlaceholder')}
+              required
+              onChange={handleChange}
+            />
+            {errors.fullName && (
+              <p className="mt-1 text-xs text-rose-400">{errors.fullName}</p>
+            )}
+          </div>
 
           {/* Username */}
-          <InputWithIcon
-            icon={Users}
-            type="text"
-            name="username"
-            placeholder={t('auth.usernamePlaceholder')}
-            required
-            onChange={handleChange}
-          />
-          {errors.username && (
-            <p className="mt-1 text-xs text-rose-400">{errors.username}</p>
-          )}
+          <div>
+            <InputWithIcon
+              icon={AtSign}
+              type="text"
+              name="username"
+              value={formData.username}
+              placeholder={t('auth.usernamePlaceholder')}
+              required
+              onChange={handleChange}
+            />
+            {errors.username && (
+              <p className="mt-1 text-xs text-rose-400">{errors.username}</p>
+            )}
+          </div>
 
           {/* Email */}
-          <InputWithIcon
-            icon={Mail}
-            type="email"
-            name="email"
-            placeholder={t('auth.emailPlaceholder')}
-            required
-            onChange={handleChange}
-          />
-          {errors.email && (
-            <p className="mt-1 text-xs text-rose-400">{errors.email}</p>
-          )}
+          <div>
+            <InputWithIcon
+              icon={Mail}
+              type="email"
+              name="email"
+              value={formData.email}
+              placeholder={t('auth.emailPlaceholder')}
+              required
+              onChange={handleChange}
+            />
+            {errors.email && (
+              <p className="mt-1 text-xs text-rose-400">{errors.email}</p>
+            )}
+          </div>
 
           {/* Password */}
-          <div className="relative">
-            <InputWithIcon
+          <div>
+            <PasswordInputWithToggle
               icon={Lock}
-              type="password"
               name="password"
+              value={formData.password}
               placeholder={t('auth.passwordPlaceholder')}
-              required
               onChange={handleChange}
-            />
-            <PasswordToggle
               showPassword={showPassword}
               setShowPassword={setShowPassword}
-              iconEye={Lock}
-              iconEyeOff={EyeOff}
             />
+            {errors.password && (
+              <p className="mt-1 text-xs text-rose-400">{errors.password}</p>
+            )}
           </div>
-          {errors.password && (
-            <p className="mt-1 text-xs text-rose-400">{errors.password}</p>
-          )}
 
           {/* Confirm Password */}
-          <div className="relative">
-            <InputWithIcon
+          <div>
+            <PasswordInputWithToggle
               icon={Lock}
-              type="password"
               name="confirmPassword"
+              value={formData.confirmPassword}
               placeholder={t('auth.confirmPasswordPlaceholder')}
-              required
               onChange={handleChange}
+              showPassword={showConfirmPassword}
+              setShowPassword={setShowConfirmPassword}
             />
-            <PasswordToggle
-              showPassword={showPassword}
-              setShowPassword={setShowPassword}
-              iconEye={Lock}
-              iconEyeOff={EyeOff}
-            />
+            {errors.confirmPassword && (
+              <p className="mt-1 text-xs text-rose-400">{errors.confirmPassword}</p>
+            )}
           </div>
-          {errors.confirmPassword && (
-            <p className="mt-1 text-xs text-rose-400">{errors.confirmPassword}</p>
-          )}
 
           {/* General errors */}
           {errors.general && (
@@ -253,7 +260,9 @@ function SignUpPage() {
             type="submit"
             disabled={isSubmitting}
             className={`w-full py-3 px-4 rounded-xl font-medium transition-all ${
-              isSubmitting ? 'bg-slate-600/50 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg'
+              isSubmitting
+                ? 'bg-slate-600/50 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg'
             }`}
           >
             {isSubmitting ? (
