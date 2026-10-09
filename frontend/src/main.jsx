@@ -14,25 +14,28 @@ import { LanguageProvider } from './i18n/LanguageContext.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import './landing.css'
 import './workspace.css'
+import { ErrorBoundary } from './components/ErrorBoundary.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
       <LanguageProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/welcome" element={<LandingPage />} />
-            <Route path="/signin" element={<SignInPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/dashboard" element={<AppLayout><DashboardPage /></AppLayout>} />
-            <Route path="/transactions" element={<AppLayout><TransactionsPage /></AppLayout>} />
-            <Route path="/receivables" element={<AppLayout><ReceivablesPage /></AppLayout>} />
-            <Route path="/payables" element={<AppLayout><PayablesPage /></AppLayout>} />
-            <Route path="/ai-assistant" element={<AppLayout><AiAssistantPage /></AppLayout>} />
-            <Route path="/settings" element={<AppLayout><SettingsPage /></AppLayout>} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/welcome" element={<LandingPage />} />
+              <Route path="/signin" element={<SignInPage />} />
+              <Route path="/signup" element={<SignUpPage />} />
+              <Route path="/dashboard" element={<AppLayout><DashboardPage /></AppLayout>} />
+              <Route path="/transactions" element={<AppLayout><TransactionsPage /></AppLayout>} />
+              <Route path="/receivables" element={<AppLayout><ReceivablesPage /></AppLayout>} />
+              <Route path="/payables" element={<AppLayout><PayablesPage /></AppLayout>} />
+              <Route path="/ai-assistant" element={<AppLayout><AiAssistantPage /></AppLayout>} />
+              <Route path="/settings" element={<AppLayout><SettingsPage /></AppLayout>} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </ErrorBoundary>
         </BrowserRouter>
       </LanguageProvider>
     </AuthProvider>

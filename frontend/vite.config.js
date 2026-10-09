@@ -13,5 +13,6 @@ export default defineConfig(({ mode }) => {
         '/api': apiBaseUrl,
       },
     },
+    base: './'
   }
 })
