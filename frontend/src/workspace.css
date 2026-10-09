@@ -692,13 +692,14 @@
   padding-inline: 46px;
 }
 
-.workspace-footer .brand {
-  font-size: 17px;
+.workspace-footer .nexfi-logo-full {
+  width: 97px;
+  height: 27px;
 }
 
-.workspace-footer .brand-mark {
-  width: 27px;
-  height: 27px;
+.resource-state .loading-logo {
+  width: 20px;
+  height: 20px;
 }
 
 .workspace-footer-inner > span,

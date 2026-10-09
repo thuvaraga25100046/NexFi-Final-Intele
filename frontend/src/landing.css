@@ -32,8 +32,10 @@ a { color: inherit; }
 .site-header { position: relative; z-index: 10; height: 82px; background: var(--paper); border-bottom: 1px solid rgba(23, 43, 36, .07); }
 .nav-inner, .hero-inner, .hero-footer, .principles-inner, .section-inner, .clarity-inner, .closing-inner, .footer-inner { max-width: 1280px; margin-inline: auto; padding-inline: 46px; }
 .nav-inner { height: 100%; }
-.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--forest-deep); font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 800; text-decoration: none; letter-spacing: 0; }
-.brand-mark { display: grid; width: 32px; height: 32px; place-items: center; color: var(--lime); background: var(--forest); border-radius: 10px 10px 10px 3px; }
+.brand { display: inline-flex; align-items: center; color: var(--forest-deep); text-decoration: none; }
+.nexfi-logo { display: block; flex: none; overflow: visible; }
+.nexfi-logo-full { width: 115px; height: 32px; }
+.nexfi-logo-compact { width: 40px; height: 40px; }
 .main-nav { display: flex; align-items: center; gap: 38px; margin-left: 100px; }
 .main-nav a, .nav-signin { color: #56675e; font-size: 13px; font-weight: 600; text-decoration: none; transition: color 160ms ease; }
 .main-nav a:hover, .nav-signin:hover { color: var(--forest); }
@@ -72,7 +74,7 @@ a { color: inherit; }
 .dashboard-topline, .dashboard-brand, .avatar-button, .dashboard-greeting, .balance-row, .balance-change, .period-switch, .chart-labels, .dashboard-section-heading, .dashboard-section-heading a, .activity-row, .activity-copy, .live-status { display: flex; align-items: center; }
 .dashboard-topline, .dashboard-greeting, .balance-row, .dashboard-section-heading { justify-content: space-between; }
 .dashboard-brand { gap: 7px; color: var(--forest); font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 800; }
-.dashboard-brand-mark { display: grid; width: 23px; height: 23px; place-items: center; color: var(--lime); background: var(--forest); border-radius: 7px 7px 7px 2px; }
+.dashboard-brand-logo { width: 23px; height: 23px; }
 .avatar-button { gap: 6px; padding: 0; color: #5c6c62; font-size: 10px; }
 .avatar-button span { display: grid; width: 25px; height: 25px; place-items: center; color: var(--forest); background: #e7f1e8; border-radius: 50%; font-size: 9px; font-weight: 700; }
 .dashboard-greeting { align-items: flex-end; margin-top: 24px; }
@@ -175,8 +177,7 @@ a { color: inherit; }
 .closing-sparkle { position: absolute; right: 18px; bottom: 58px; color: var(--lime); }
 .site-footer { background: #f8faf6; }
 .footer-inner { min-height: 84px; }
-.footer-inner .brand { font-size: 18px; }
-.footer-inner .brand-mark { width: 27px; height: 27px; border-radius: 8px 8px 8px 2px; }
+.footer-inner .nexfi-logo-full { width: 97px; height: 27px; }
 .footer-tagline, .footer-legal { color: #738177; font-size: 10px; }
 .footer-tagline { color: #496351; font-weight: 600; }
 

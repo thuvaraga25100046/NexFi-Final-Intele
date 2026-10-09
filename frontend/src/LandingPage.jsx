@@ -12,6 +12,7 @@ import {
   WalletCards,
 } from 'lucide-react'
 import Brand from './components/Brand.jsx'
+import Logo from './components/Logo.jsx'
 import SiteHeader from './components/SiteHeader.jsx'
 
 const chartValues = [34, 48, 42, 62, 54, 73, 59, 86, 68, 78, 65, 96]
@@ -45,8 +46,8 @@ function DashboardPreview() {
     <div className="dashboard-shell" id="overview" aria-label="NexFi dashboard preview">
       <div className="dashboard-topline">
         <div className="dashboard-brand">
-          <span className="dashboard-brand-mark"><TrendingUp size={15} /></span>
-          <span>nexfi</span>
+          <Logo className="dashboard-brand-logo" decorative variant="compact" />
+          <span>NexFi</span>
         </div>
         <div className="avatar-button" aria-label="Jamie Doe account">
           <span>JD</span><ChevronDown size={13} />

@@ -1,11 +1,12 @@
 import { AlertCircle, RefreshCw } from 'lucide-react'
 import useTranslation from '../i18n/useTranslation.js'
 import { translateApiError } from '../i18n/translations.js'
+import Logo from './Logo.jsx'
 
 export default function ResourceState({ loading, error, retry, empty, emptyTitle, emptyKey = 'messages.noRecords', success = false }) {
   const { t } = useTranslation()
   if (loading) {
-    return <div className="resource-state" role="status"><span className="loading-dot" /> {t('messages.loading')}</div>
+    return <div className="resource-state" role="status"><Logo className="loading-logo" decorative variant="compact" /> {t('messages.loading')}</div>
   }
 
   if (error) {
