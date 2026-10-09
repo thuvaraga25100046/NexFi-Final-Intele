@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowDownLeft,
   ArrowRight,
@@ -9,6 +9,7 @@ import {
   CircleDollarSign,
   CreditCard,
   Database,
+  Gauge,
   FilePlus2,
   MessageCircle,
   PencilLine,
@@ -120,6 +121,106 @@ function UpcomingList({ items, loading, error, retry, title, eyebrow, to, kind, 
             )
           })}
         </div>
+      )}
+    </section>
+  )
+}
+
+function ExecutiveSummary({ receivables, payables, language, currency }) {
+  const loadForecast = useCallback((signal) => fetchCashFlowForecast(signal, 30), [])
+  const forecast = useApiResource(loadForecast)
+  const today = localDate()
+  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+  const monthEndKey = `${monthEnd.getFullYear()}-${String(monthEnd.getMonth() + 1).padStart(2, '0')}-${String(monthEnd.getDate()).padStart(2, '0')}`
+  const monthForecastDays = (forecast.data?.days ?? []).filter((day) => day.date <= monthEndKey)
+  const monthEndBalance = monthForecastDays.at(-1)?.projectedBalance
+  const lowestBalance = Math.min(
+    Number(forecast.data?.openingBalance ?? 0),
+    ...(forecast.data?.days ?? []).map((day) => Number(day.projectedBalance)),
+  )
+  const forecastOutflow = Number(forecast.data?.expectedOutflow ?? 0)
+  const healthScore = forecast.data
+    ? Math.round(Math.max(0, Math.min(100, forecastOutflow > 0 ? (lowestBalance / forecastOutflow) * 100 : lowestBalance > 0 ? 100 : 0)))
+    : null
+  const healthTone = healthScore === null ? 'pending' : healthScore >= 75 ? 'healthy' : healthScore >= 45 ? 'watch' : 'risk'
+  const overduePayables = (payables.data ?? []).filter((item) => item.status !== 'paid' && (item.status === 'overdue' || dayDifference(item.dueDate) < 0))
+  const upcomingPayables = (payables.data ?? []).filter((item) => item.status !== 'paid' && dayDifference(item.dueDate) >= 0 && dayDifference(item.dueDate) <= 14)
+  const overdueReceivables = (receivables.data ?? []).filter((item) => item.status !== 'paid' && (item.status === 'overdue' || dayDifference(item.dueDate) < 0))
+  const upcomingTotal = upcomingPayables.reduce((sum, item) => sum + Number(item.amount), 0)
+  const overdueTotal = overduePayables.reduce((sum, item) => sum + Number(item.amount), 0)
+  const overdueReceivableTotal = overdueReceivables.reduce((sum, item) => sum + Number(item.amount), 0)
+  const recommendation = forecast.data?.shortageAlert
+    ? {
+      tone: 'risk',
+      text: `Review outflows ahead of ${formatDate(forecast.data.shortageAlert.shortageDate, language)} and follow up on incoming invoices to protect your cash buffer.`,
+    }
+    : overdueReceivables.length
+      ? {
+        tone: 'watch',
+        text: `Follow up on ${overdueReceivables.length} overdue ${overdueReceivables.length === 1 ? 'invoice' : 'invoices'} (${formatCurrency(overdueReceivableTotal, language, currency)}) to strengthen your cash position.`,
+      }
+      : upcomingPayables.length
+        ? {
+          tone: 'healthy',
+          text: `Set aside ${formatCurrency(upcomingTotal, language, currency)} for ${upcomingPayables.length} ${upcomingPayables.length === 1 ? 'obligation' : 'obligations'} due in the next 14 days.`,
+        }
+        : {
+          tone: 'healthy',
+          text: 'Your projected cash balance stays positive. Keep monitoring weekly to stay ahead of changes.',
+        }
+  const loading = forecast.loading || payables.loading || receivables.loading
+  const error = forecast.error || payables.error || receivables.error
+
+  function retryAll() {
+    forecast.retry()
+    payables.retry()
+    receivables.retry()
+  }
+
+  return (
+    <section className="executive-summary-card" aria-labelledby="executive-summary-heading">
+      <div className="executive-summary-heading">
+        <div>
+          <span className="home-kicker">YOUR MONEY, AT A GLANCE</span>
+          <h2 id="executive-summary-heading">Executive summary</h2>
+        </div>
+        <span className="executive-summary-period"><span /> 30-day outlook</span>
+      </div>
+      {error ? (
+        <ResourceState loading={false} error={error} retry={retryAll} empty={false} />
+      ) : (
+        <>
+          <div className="executive-summary-metrics">
+            <article className={`executive-metric executive-health executive-${healthTone}`}>
+              <span className="executive-metric-icon"><Gauge size={18} /></span>
+              <span className="executive-metric-label">Cash health score</span>
+              <strong>{loading || healthScore === null ? '—' : `${healthScore}`}<small>{loading || healthScore === null ? '' : '/100'}</small></strong>
+              <span className="executive-health-track"><i style={{ width: `${healthScore ?? 0}%` }} /></span>
+              <span className="executive-metric-caption">{healthScore === null ? 'Calculating outlook' : healthScore >= 75 ? 'Healthy cash buffer' : healthScore >= 45 ? 'Keep an eye on cash flow' : 'Cash flow needs attention'}</span>
+            </article>
+            <article className="executive-metric">
+              <span className="executive-metric-icon executive-icon-violet"><ArrowRight size={18} /></span>
+              <span className="executive-metric-label">Month-end forecast</span>
+              <strong>{loading || monthEndBalance === undefined ? '—' : formatCurrency(monthEndBalance, language, currency)}</strong>
+              <span className={`executive-metric-caption${Number(monthEndBalance) < 0 ? ' executive-caption-risk' : ''}`}>
+                {monthEndBalance === undefined ? 'Forecast unavailable' : `Projected ${formatDate(monthForecastDays.at(-1)?.date, language)}`}
+              </span>
+            </article>
+            <article className="executive-metric">
+              <span className="executive-metric-icon executive-icon-amber"><CreditCard size={18} /></span>
+              <span className="executive-metric-label">Upcoming obligations</span>
+              <strong>{loading ? '—' : formatCurrency(upcomingTotal, language, currency)}</strong>
+              <span className="executive-metric-caption">
+                {loading ? 'Loading obligations' : `${upcomingPayables.length} due in 14 days${overduePayables.length ? ` · ${overduePayables.length} overdue (${formatCurrency(overdueTotal, language, currency)})` : ''}`}
+              </span>
+            </article>
+          </div>
+          <div className={`executive-recommendation executive-recommendation-${recommendation.tone}`}>
+            <span className="executive-recommendation-icon"><Sparkles size={17} /></span>
+            <div><span>AI recommendation</span><p>{loading ? 'Reviewing your cash flow and upcoming activity…' : recommendation.text}</p></div>
+            <span className="executive-recommendation-indicator" aria-hidden="true" />
+          </div>
+        </>
       )}
     </section>
   )
@@ -256,6 +357,13 @@ export default function DashboardPage() {
           </article>
         ))}
       </section>
+
+      <ExecutiveSummary
+        language={language}
+        currency={currency}
+        payables={payables}
+        receivables={receivables}
+      />
 
       {summary.error && <ResourceState loading={false} error={summary.error} retry={summary.retry} empty={false} />}
 
