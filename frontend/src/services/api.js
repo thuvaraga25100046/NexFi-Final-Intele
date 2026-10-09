@@ -61,3 +61,22 @@ async function createResource(path, payload) {
 export const createTransaction = (payload) => createResource('transactions', payload)
 export const createReceivable = (payload) => createResource('receivables', payload)
 export const createPayable = (payload) => createResource('payables', payload)
+
+async function updateResource(path, id, payload) {
+  const result = await apiPut(`${path}/${id}`, payload)
+  window.dispatchEvent(new Event(RESOURCE_CHANGED_EVENT))
+  return result
+}
+
+async function deleteResource(path, id) {
+  const result = await apiDelete(`${path}/${id}`)
+  window.dispatchEvent(new Event(RESOURCE_CHANGED_EVENT))
+  return result
+}
+
+export const updateTransaction = (id, payload) => updateResource('transactions', id, payload)
+export const updateReceivable = (id, payload) => updateResource('receivables', id, payload)
+export const updatePayable = (id, payload) => updateResource('payables', id, payload)
+export const deleteTransaction = (id) => deleteResource('transactions', id)
+export const deleteReceivable = (id) => deleteResource('receivables', id)
+export const deletePayable = (id) => deleteResource('payables', id)

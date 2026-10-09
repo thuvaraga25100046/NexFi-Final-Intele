@@ -1,5 +1,12 @@
 import { useState } from 'react'
-import { createPayable, createReceivable, createTransaction } from '../services/api.js'
+import {
+  createPayable,
+  createReceivable,
+  createTransaction,
+  updatePayable,
+  updateReceivable,
+  updateTransaction,
+} from '../services/api.js'
 import useTranslation from '../i18n/useTranslation.js'
 import { translateApiError } from '../i18n/translations.js'
 
@@ -8,8 +15,10 @@ const today = new Date().toISOString().slice(0, 10)
 const formConfig = {
   transaction: {
     titleKey: 'forms.addTransaction',
+    editTitleKey: 'forms.editTransaction',
     submitLabelKey: 'actions.saveTransaction',
     submit: createTransaction,
+    update: updateTransaction,
     fields: [
       { name: 'type', labelKey: 'forms.type', type: 'select', options: [['income', 'types.income'], ['expense', 'types.expense']] },
       { name: 'amount', labelKey: 'forms.amount', type: 'number', min: '0.01', step: '0.01', placeholderKey: 'forms.amountPlaceholder' },
@@ -20,8 +29,10 @@ const formConfig = {
   },
   receivable: {
     titleKey: 'forms.addReceivable',
+    editTitleKey: 'forms.editReceivable',
     submitLabelKey: 'actions.saveReceivable',
     submit: createReceivable,
+    update: updateReceivable,
     fields: [
       { name: 'customerName', labelKey: 'forms.customerName', type: 'text', maxLength: 150, placeholderKey: 'forms.customerPlaceholder' },
       { name: 'amount', labelKey: 'forms.amount', type: 'number', min: '0.01', step: '0.01', placeholderKey: 'forms.amountPlaceholder' },
@@ -32,8 +43,10 @@ const formConfig = {
   },
   payable: {
     titleKey: 'forms.addPayable',
+    editTitleKey: 'forms.editPayable',
     submitLabelKey: 'actions.savePayable',
     submit: createPayable,
+    update: updatePayable,
     fields: [
       { name: 'vendorName', labelKey: 'forms.vendorName', type: 'text', maxLength: 150, placeholderKey: 'forms.vendorPlaceholder' },
       { name: 'amount', labelKey: 'forms.amount', type: 'number', min: '0.01', step: '0.01', placeholderKey: 'forms.amountPlaceholder' },
@@ -44,12 +57,12 @@ const formConfig = {
   },
 }
 
-export default function CreateRecordForm({ kind, onCancel, onCreated }) {
+export default function CreateRecordForm({ kind, record, onCancel, onCreated }) {
   const { t } = useTranslation()
   const config = formConfig[kind]
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const [status, setStatus] = useState('pending')
+  const [status, setStatus] = useState(record?.status ?? 'pending')
 
   function handleInvalid(event) {
     const field = event.target
@@ -82,7 +95,11 @@ export default function CreateRecordForm({ kind, onCancel, onCreated }) {
     const payload = { ...formData, amount: Number(formData.amount) }
 
     try {
-      await config.submit(payload)
+      if (record) {
+        await config.update(record.id, payload)
+      } else {
+        await config.submit(payload)
+      }
       onCreated()
     } catch (requestError) {
       setError(requestError.message || t('messages.saveFailed'))
@@ -93,7 +110,7 @@ export default function CreateRecordForm({ kind, onCancel, onCreated }) {
 
   return (
     <form className="record-form workspace-panel" onInput={clearValidation} onInvalid={handleInvalid} onSubmit={handleSubmit}>
-      <div className="record-form-heading"><h2>{t(config.titleKey)}</h2><p>{t('forms.requiredHelp')}</p></div>
+      <div className="record-form-heading"><h2>{t(record ? config.editTitleKey : config.titleKey)}</h2><p>{t('forms.requiredHelp')}</p></div>
       <div className="record-form-fields">
         {config.fields.map((field) => (
           field.paidOnly && status !== 'paid' ? null : (
@@ -102,7 +119,7 @@ export default function CreateRecordForm({ kind, onCancel, onCreated }) {
             {field.type === 'select' ? (
               <select
                 data-label-key={field.labelKey}
-                defaultValue={field.options[0][0]}
+                defaultValue={record?.[field.name] ?? field.options[0][0]}
                 name={field.name}
                 onChange={field.name === 'status' ? (event) => setStatus(event.target.value) : undefined}
                 required
@@ -111,7 +128,7 @@ export default function CreateRecordForm({ kind, onCancel, onCreated }) {
               </select>
             ) : (
               <input
-                defaultValue={field.defaultValue}
+                defaultValue={record?.[field.name] ?? field.defaultValue}
                 data-label-key={field.labelKey}
                 maxLength={field.maxLength}
                 max={field.max}
