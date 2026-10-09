@@ -21,7 +21,7 @@ function PasswordToggle({ isPassword, setIsPassword, iconEye, iconEyeOff }) {
   return (
     <div className="relative">
       <input
-        type isPassword ? "password" : "text"
+        type={isPassword ? "password" : "text"}
         id="password"
         name="password"
         autoComplete="current-password"
