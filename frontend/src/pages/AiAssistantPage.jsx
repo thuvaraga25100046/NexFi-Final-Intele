@@ -1,26 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import {
-  ArrowRight,
-  Bot,
-  CheckCircle2,
-  ChevronRight,
-  HelpCircle,
   Lightbulb,
-  MessageSquare,
   RefreshCw,
   Send,
-  ShieldCheck,
   Sparkles,
-  TrendingUp,
   User,
-  Zap,
 } from 'lucide-react'
-import PageHeading from '../components/PageHeading.jsx'
 import useApiResource from '../hooks/useApiResource.js'
 import {
-  fetchCashFlowForecast,
   fetchDashboardSummary,
-  fetchPayables,
   fetchReceivables,
 } from '../services/api.js'
 import useTranslation from '../i18n/useTranslation.js'
