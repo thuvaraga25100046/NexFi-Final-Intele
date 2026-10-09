@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 
 // Error Boundary to catch runtime errors and display a fallback UI
 // instead of a blank screen

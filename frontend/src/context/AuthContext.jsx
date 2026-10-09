@@ -110,8 +110,18 @@ export const AuthProvider = ({ children }) => {
     setRememberMe(storedRemember === 'true')
   }, [])
 
+  const value = {
+    user,
+    isLoggedIn,
+    rememberMe,
+    login,
+    register,
+    logout,
+    toggleDemoMode,
+  }
+
   return (
-    <AuthContext.Provider>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )

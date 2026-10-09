@@ -4,7 +4,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react'
-import { useTranslation } from '../i18n/useTranslation.js'
+import useTranslation from '../i18n/useTranslation.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { Link } from 'react-router-dom'
 
@@ -119,7 +119,7 @@ function SignInPage() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 text-slate-100 placeholder-slate-400 transition-colors focus-visible:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500/50outline-none focus:border-indigo-500"
+              className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 text-slate-100 placeholder-slate-400 transition-colors focus-visible:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500/50"
               placeholder={t('auth.emailPlaceholder')}
             />
             {errors.email && (
@@ -140,4 +140,113 @@ function SignInPage() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 text-slate-100 placeholder-slate-400 transition-colors focus-visible:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500/50
+                className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 text-slate-100 placeholder-slate-400 transition-colors focus-visible:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500/50"
+                placeholder={t('auth.passwordPlaceholder')}
+              />
+              <PasswordToggle
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
+              />
+            </div>
+            {errors.password && (
+              <p className="mt-1 text-xs text-rose-400">{errors.password}</p>
+            )}
+          </div>
+
+          {/* Remember Me */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                name="rememberMe"
+                checked={formData.rememberMe}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, rememberMe: e.target.checked }))
+                }
+                className="w-4 h-4 rounded border-slate-600/50 cursor-pointer"
+              />
+              <label htmlFor="rememberMe" className="text-sm text-slate-300 cursor-pointer">
+                {t('auth.rememberMe')}
+              </label>
+            </div>
+
+            <a
+              href="#"
+              className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors underline"
+            >
+              {t('auth.forgotPassword')}
+            </a>
+          </div>
+
+          {errors.general && (
+            <p className="mt-2 text-xs text-rose-400">{errors.general}</p>
+          )}
+
+          {/* Submit button */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className={`w-full py-3 px-4 rounded-xl font-medium transition-all ${
+              isSubmitting
+                ? 'bg-slate-600/50 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg'
+            }`}
+          >
+            {isSubmitting ? (
+              <span className="flex items-center justify-center">
+                <span className="animate-spin inline-block mr-2 size-4 border-2 border-white border-t-transparent rounded-full"></span>
+                {t('auth.signingIn')}
+              </span>
+            ) : (
+              <span>{t('auth.signIn')}</span>
+            )}
+          </button>
+        </form>
+
+        {/* Divider */}
+        <div className="mt-6 flex items-center gap-4">
+          <span className="flex-1 h-px bg-slate-600/50"></span>
+          <span className="text-sm text-slate-500">Or continue with</span>
+          <span className="flex-1 h-px bg-slate-600/50"></span>
+        </div>
+
+        {/* Social login buttons */}
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            className="flex-1 py-2 px-4 rounded-xl bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 transition-colors text-sm flex items-center justify-center"
+          >
+            Google
+          </button>
+          <button
+            type="button"
+            className="flex-1 py-2 px-4 rounded-xl bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 transition-colors text-sm flex items-center justify-center"
+          >
+            GitHub
+          </button>
+        </div>
+
+        {/* Demo mode toggle */}
+        {showDemoToggle && (
+          <div className="mt-6 p-4 rounded-xl bg-indigo-600/20 border border-indigo-600/30 text-center">
+            <p className="text-sm text-indigo-300">
+              <strong>{t('dashboard.demoActive')}</strong> {t('dashboard.demoDescription')}
+            </p>
+            <button
+              onClick={() => {
+                toggleDemoMode(false)
+                setShowDemoToggle(false)
+              }}
+              className="mt-2 text-xs text-indigo-300 hover:text-indigo-200 transition-colors"
+            >
+              {t('auth.exitDemo')}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default SignInPage

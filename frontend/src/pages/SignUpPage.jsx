@@ -1,40 +1,52 @@
 import { useState } from 'react'
 import {
-  ArrowDownLeft,
-  ArrowDownRight,
-  ArrowRight,
-  ArrowUpRight,
-  CheckCircle2,
-  ChevronRight,
   Mail,
   Lock,
-  MailError,
-  LockError,
+  Eye,
+  EyeOff,
+  Users,
+  Globe,
   ShieldCheck,
 } from 'lucide-react'
 import { useTranslation } from '../i18n/useTranslation.js'
-import { formatCurrency } from '../i18n/formatters.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { Link } from 'react-router-dom'
 
-function PasswordToggle({ isPassword, setIsPassword, iconEye, iconEyeOff }) {
+function PasswordToggle({ showPassword, setShowPassword, iconEye, iconEyeOff }) {
   return (
     <div className="relative">
       <input
-        type={isPassword ? "password" : "text"}
+        type={showPassword ? "text" : "password"}
         id="password"
         name="password"
         autoComplete="current-password"
         required
-        className="w-full pl-10 pr-12 py-3 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 font-slate text-slate-900 dark:text-slate-100 shadow-sm transition-colors focus outline-none focus:border-indigo-500/50"
+        className="w-full pl-10 pr-12 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 dark:text-slate-100 shadow-sm transition-colors focus-outline focus:border-indigo-500/50"
       />
       <button
-        onClick={() => setIsPassword(!isPassword)}
+        onClick={() => setShowPassword(!showPassword)}
         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-        aria-label={isPassword ? 'Show password' : 'Hide password'}
+        aria-label={showPassword ? 'Hide password' : 'Show password'}
       >
-        {isPassword ? <iconEyeOff size={16} /> : <iconEye size={16} />}
+        {showPassword ? <iconEyeOff size={18} /> : <iconEye size={18} />}
       </button>
+    </div>
+  )
+}
+
+function InputWithIcon({ icon, type, name, placeholder, ...rest }) {
+  return (
+    <div className="relative">
+      <input
+        type={type}
+        name={name}
+        className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 dark:text-slate-100 shadow-sm transition-colors focus-outline focus:border-indigo-500/50"
+        placeholder={placeholder}
+        {...rest}
+      />
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+        <icon className="size-4" />
+      </div>
     </div>
   )
 }
@@ -43,13 +55,15 @@ function SignUpPage() {
   const { t, language } = useTranslation()
   const [formData, setFormData] = useState({
     fullName: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
   })
   const [errors, setErrors] = useState({})
+  const [showPassword, setShowPassword] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
-  const { login, register } = useAuth()
+  const { register } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleChange = (e) => {
@@ -64,19 +78,21 @@ function SignUpPage() {
     e.preventDefault()
     setErrors({})
 
-    const { fullName, email, password, confirmPassword } = formData
+    const { fullName, username, email, password, confirmPassword } = formData
 
     // Validation
     if (!fullName.trim()) {
       setErrors((prev) => ({ ...prev, fullName: t('auth.fullNameRequired') }))
+    }
+    if (!username.trim()) {
+      setErrors((prev) => ({ ...prev, username: t('auth.usernameRequired') }))
     }
     if (!email.trim()) {
       setErrors((prev) => ({ ...prev, email: t('auth.emailRequired') }))
     }
     if (!password) {
       setErrors((prev) => ({ ...prev, password: t('auth.passwordRequired') }))
-    }
-    if (password && password.length < 6) {
+    } else if (password.length < 6) {
       setErrors((prev) => ({ ...prev, password: t('auth.passwordMinLength') }))
     }
     if (password !== confirmPassword) {
@@ -94,7 +110,6 @@ function SignUpPage() {
 
     if (result.success) {
       setShowSuccess(true)
-      // Redirect after a short delay
       setTimeout(() => {
         window.dispatchEvent(new Event('nexfi:resource-changed'))
       }, 1500)
@@ -112,18 +127,23 @@ function SignUpPage() {
   }, [showSuccess])
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-950 via-slate-900/90 to-slate-950">
-      <div class="max-w-md mx-auto px-4 py-8">
-        {/* Header with toggle text */}
+    <div className="min-h-screen bg-gray-950">
+      <div class="max-w-md w-full mx-auto px-4 py-8">
+        {/* Header with gradient background */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-slate-100 mb-2">
-            {t('auth.signUp')}
-          </h2>
-          <p className="text-slate-400 text-sm">
-            {t('auth.createYourAccount')}
-          </p>
+          <div className="relative">
+            <div
+              className="absolute -inset-1/2 bg-indigo-500/20 -z-10 rounded-2xl opacity-75 blur-lg"
+            />
+            <h2 className="text-2xl font-bold text-slate-100 mb-2">
+              {t('auth.signUp')}
+            </h2>
+            <p className="text-slate-400 text-sm">
+              {t('auth.createYourAccount')}
+            </p>
+          </div>
           {showSuccess && (
-            <div className="mt-4 p-3 rounded-xl bg-emerald-600/20 text-emerald-400 text-sm">
+            <div className="mt-4 rounded-xl bg-emerald-600/20 text-emerald-400 text-sm p-3">
               {t('auth.registrationSuccess')}
             </div>
           )}
@@ -141,108 +161,104 @@ function SignUpPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Full Name */}
-          <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-slate-300 mb-2">
-              {t('auth.fullName')}
-            </label>
-            <input
-              type="text"
-              id="fullName"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 dark:text-slate-100 placeholder-slate-400 transition-colors focus-outline"
-              placeholder={t('auth.fullNamePlaceholder')}
-            />
-            {errors.fullName && (
-              <p className="mt-1 text-xs text-emerald-400">{errors.fullName}</p>
-            )}
-          </div>
+          <InputWithIcon
+            icon={Users}
+            type="text"
+            name="fullName"
+            placeholder={t('auth.fullNamePlaceholder')}
+            required
+            onChange={handleChange}
+          />
+          {errors.fullName && (
+            <p className="mt-1 text-xs text-rose-400">{errors.fullName}</p>
+          )}
+
+          {/* Username */}
+          <InputWithIcon
+            icon={Users}
+            type="text"
+            name="username"
+            placeholder={t('auth.usernamePlaceholder')}
+            required
+            onChange={handleChange}
+          />
+          {errors.username && (
+            <p className="mt-1 text-xs text-rose-400">{errors.username}</p>
+          )}
 
           {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
-              {t('auth.email')}
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 dark:text-slate-100 placeholder-slate-400 transition-colors focus-outline"
-              placeholder={t('auth.emailPlaceholder')}
-            />
-            {errors.email && (
-              <p className="mt-1 text-xs text-emerald-400">{errors.email}</p>
-            )}
-          </div>
+          <InputWithIcon
+            icon={Mail}
+            type="email"
+            name="email"
+            placeholder={t('auth.emailPlaceholder')}
+            required
+            onChange={handleChange}
+          />
+          {errors.email && (
+            <p className="mt-1 text-xs text-rose-400">{errors.email}</p>
+          )}
 
           {/* Password */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
-              {t('auth.password')}
-            </label>
-            <PasswordToggle
-              isPassword={formData.password?.length > 0 ? true : false}
-              setIsPassword={setIsPassword}
-              iconEye={Lock}
-              iconEyeOff={LockError}
-            />
-            <input
+          <div className="relative">
+            <InputWithIcon
+              icon={Lock}
               type="password"
-              id="password"
               name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 dark:text-slate-100 placeholder-slate-400 transition-colors focus-outline"
               placeholder={t('auth.passwordPlaceholder')}
-              disabled={false}
+              required
+              onChange={handleChange}
             />
-            {errors.password && (
-              <p className="mt-1 text-xs text-emerald-400">{errors.password}</p>
-            )}
+            <PasswordToggle
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
+              iconEye={Lock}
+              iconEyeOff={EyeOff}
+            />
           </div>
+          {errors.password && (
+            <p className="mt-1 text-xs text-rose-400">{errors.password}</p>
+          )}
 
           {/* Confirm Password */}
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300 mb-2">
-              {t('auth.confirmPassword')}
-            </label>
-            <input
+          <div className="relative">
+            <InputWithIcon
+              icon={Lock}
               type="password"
-              id="confirmPassword"
               name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 dark:text-slate-100 placeholder-slate-400 transition-colors focus-outline"
               placeholder={t('auth.confirmPasswordPlaceholder')}
-              disabled={false}
+              required
+              onChange={handleChange}
             />
-            {errors.confirmPassword && (
-              <p className="mt-1 text-xs text-emerald-400">{errors.confirmPassword}</p>
-            )}
+            <PasswordToggle
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
+              iconEye={Lock}
+              iconEyeOff={EyeOff}
+            />
           </div>
+          {errors.confirmPassword && (
+            <p className="mt-1 text-xs text-rose-400">{errors.confirmPassword}</p>
+          )}
+
+          {/* General errors */}
+          {errors.general && (
+            <p className="mt-2 text-xs text-rose-400">{errors.general}</p>
+          )}
 
           {/* Submit button */}
           <button
             type="submit"
             disabled={isSubmitting}
             className={`w-full py-3 px-4 rounded-xl font-medium transition-all ${
-              isSubmitting
-                ? 'bg-slate-600/50 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg'
+              isSubmitting ? 'bg-slate-600/50 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg'
             }`}
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center">
-                <span className="animate-spin inline-block mr-2 size-4 border-2 border-white border-t-transparent"></span>
+                <span className="animate-spin inline-block mr-2 size-4 border-2 border-white border-t-transparent rounded-full"></span>
                 {t('auth.signingUp')}
               </span>
             ) : (
@@ -251,23 +267,23 @@ function SignUpPage() {
           </button>
         </form>
 
-        {/* Social login or divider */}
-        <div className="mt-6 text-center">
+        {/* Divider & Social Login */}
+        <div className="mt-6 pt-6 border-t border-slate-800/50 text-center">
           <span className="text-slate-500 text-xs opacity-60">Or continue with</span>
           <div className="flex gap-3 mt-3">
             <button
-              className="flex-1 py-2 px-4 rounded-xl bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 transition-colors text-sm"
+              type="button"
+              className="flex-1 py-2 px-4 rounded-xl bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 transition-colors text-sm flex items-center justify-center"
             >
-              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+              <Globe size={16} className="mr-2" />
+              Google
             </button>
             <button
-              className="flex-1 py-2 px-4 rounded-xl bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 transition-colors text-sm"
+              type="button"
+              className="flex-1 py-2 px-4 rounded-xl bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 transition-colors text-sm flex items-center justify-center"
             >
-              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+              <ShieldCheck size={16} className="mr-2" />
+              GitHub
             </button>
           </div>
         </div>
