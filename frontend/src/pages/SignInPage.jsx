@@ -9,7 +9,6 @@ import {
   Mail,
   Lock,
   MailError,
-  LockError,
   ShieldCheck,
   TrendingUp,
 } from 'lucide-react'
@@ -156,7 +155,7 @@ function SignInPage() {
               isPassword={formData.password?.length > 0 ? true : false}
               setIsPassword={setIsPassword}
               iconEye={Lock}
-              iconEyeOff={LockError}
+              iconEyeOff={Lock}
             />
             <input
               type="password"
