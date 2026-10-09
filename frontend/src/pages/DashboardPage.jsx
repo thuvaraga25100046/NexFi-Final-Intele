@@ -1,29 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  ArrowDownLeft,
+  AlertCircle,
   ArrowRight,
-  ArrowUpRight,
-  Camera,
-  Check,
   CheckCircle2,
-  CircleDollarSign,
-  CreditCard,
   Database,
-  Gauge,
-  FilePlus2,
-  MessageCircle,
+  Moon,
   PencilLine,
   Plus,
-  ReceiptText,
-  ShoppingBag,
+  RefreshCw,
   Sparkles,
+  Sun,
   TriangleAlert,
-  TrendingUp,
   Wallet,
   X,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import CashFlowForecastPanel from '../components/CashFlowForecastPanel.jsx'
+import ExecutiveKPISection from '../components/dashboard/ExecutiveKPISection.jsx'
+import AiInsightsPanel from '../components/dashboard/AiInsightsPanel.jsx'
+import AdvancedForecastSection from '../components/dashboard/AdvancedForecastSection.jsx'
+import QuickActionsSection from '../components/dashboard/QuickActionsSection.jsx'
+import FinancialOverviewGrid from '../components/dashboard/FinancialOverviewGrid.jsx'
+import RiskMonitoringPanel from '../components/dashboard/RiskMonitoringPanel.jsx'
+import SmartAnalyticsSection from '../components/dashboard/SmartAnalyticsSection.jsx'
+import ActivityTimeline from '../components/dashboard/ActivityTimeline.jsx'
 import CreateRecordForm from '../components/CreateRecordForm.jsx'
 import OpeningBalanceModal from '../components/OpeningBalanceModal.jsx'
 import ResourceState from '../components/ResourceState.jsx'
@@ -38,191 +36,47 @@ import {
 } from '../services/api.js'
 import useTranslation from '../i18n/useTranslation.js'
 import { formatCurrency, formatDate } from '../i18n/formatters.js'
-import { DEMO_MODE_CHANGED_EVENT, DEMO_MODE_KEY, isDemoModeEnabled, setDemoModeEnabled } from '../services/demoData.js'
-
-const quickStats = [
-  { key: 'dashboard.totalIncome', field: 'totalIncome', icon: ArrowDownLeft, tone: 'mint' },
-  { key: 'dashboard.totalExpenses', field: 'totalExpenses', icon: ArrowUpRight, tone: 'rose' },
-  { key: 'dashboard.totalReceivables', field: 'totalReceivables', icon: CircleDollarSign, tone: 'mint' },
-  { key: 'dashboard.totalPayables', field: 'totalPayables', icon: CreditCard, tone: 'amber' },
-]
-
-const quickActions = [
-  { kind: 'transaction', key: 'home.addTransaction', icon: FilePlus2, tone: 'mint' },
-  { kind: 'receivable', key: 'home.addReceivable', icon: ArrowDownLeft, tone: 'blue' },
-  { kind: 'payable', key: 'home.addPayable', icon: ArrowUpRight, tone: 'amber' },
-]
+import {
+  DEMO_MODE_CHANGED_EVENT,
+  DEMO_MODE_KEY,
+  isDemoModeEnabled,
+  setDemoModeEnabled,
+} from '../services/demoData.js'
+import '../components/dashboard/dashboard.css'
 
 function localDate(date = new Date()) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
 
-function dayDifference(date) {
-  const parts = date.split('-').map(Number)
-  const target = Date.UTC(parts[0], parts[1] - 1, parts[2])
-  const today = new Date()
-  const start = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
-  return Math.round((target - start) / 86_400_000)
-}
-
-function dueStatus(date, status, t) {
-  const days = dayDifference(date)
-  if (status === 'overdue' || days < 0) return { label: t('home.overdue'), tone: 'overdue' }
-  if (days === 0) return { label: t('home.dueToday'), tone: 'today' }
-  return { label: t('home.dueInDays', { count: days }), tone: 'soon' }
-}
-
-function initials(name) {
-  return name?.trim().charAt(0).toUpperCase() || '?'
-}
-
 function ModalFrame({ title, onClose, children }) {
   const { t } = useTranslation()
   return (
-    <div className="home-modal-backdrop" onMouseDown={(event) => {
-      if (event.target === event.currentTarget) onClose()
-    }}>
-      <section aria-label={title} aria-modal="true" className="home-modal" role="dialog">
-        <div className="home-modal-heading">
-          <h2>{title}</h2>
-          <button aria-label={t('actions.close')} className="home-icon-button" onClick={onClose} type="button"><X size={20} /></button>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div
+        aria-label={title}
+        aria-modal="true"
+        role="dialog"
+        className="w-full max-w-lg rounded-2xl bg-slate-900 text-white border border-white/10 shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-200"
+      >
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+          <h2 className="text-base font-extrabold text-white tracking-tight">{title}</h2>
+          <button
+            aria-label={t('actions.close')}
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            type="button"
+          >
+            <X size={18} />
+          </button>
         </div>
         {children}
-      </section>
+      </div>
     </div>
-  )
-}
-
-function UpcomingList({ items, loading, error, retry, title, eyebrow, to, kind, language, currency, t }) {
-  return (
-    <section className="home-card upcoming-card">
-      <div className="home-section-heading">
-        <div><span className="home-kicker">{eyebrow}</span><h2>{title}</h2></div>
-        <Link className="home-view-all" to={to}>{t('dashboard.viewAll')} <ArrowRight size={15} /></Link>
-      </div>
-      <ResourceState loading={loading} error={error} retry={retry} empty={!items.length} emptyTitle={kind === 'receivable' ? t('dashboard.noOpenReceivables') : t('dashboard.noOpenPayables')} />
-      {!loading && !error && items.length > 0 && (
-        <div className="upcoming-list">
-          {items.map((item) => {
-            const name = kind === 'receivable' ? item.customerName : item.vendorName
-            const due = dueStatus(item.dueDate, item.status, t)
-            return (
-              <article className="upcoming-row" key={item.id}>
-                <span className={`upcoming-avatar upcoming-avatar-${kind}`}>{initials(name)}</span>
-                <span className="upcoming-details">
-                  <strong>{name}</strong>
-                  <span>{t('messages.due', { date: formatDate(item.dueDate, language) })}</span>
-                </span>
-                <span className="upcoming-amount-status">
-                  <strong>{formatCurrency(item.amount, language, currency)}</strong>
-                  <span className={`due-chip due-chip-${due.tone}`}>{due.label}</span>
-                </span>
-              </article>
-            )
-          })}
-        </div>
-      )}
-    </section>
-  )
-}
-
-function ExecutiveSummary({ receivables, payables, language, currency }) {
-  const loadForecast = useCallback((signal) => fetchCashFlowForecast(signal, 30), [])
-  const forecast = useApiResource(loadForecast)
-  const today = localDate()
-  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-  const monthEndKey = `${monthEnd.getFullYear()}-${String(monthEnd.getMonth() + 1).padStart(2, '0')}-${String(monthEnd.getDate()).padStart(2, '0')}`
-  const monthForecastDays = (forecast.data?.days ?? []).filter((day) => day.date <= monthEndKey)
-  const monthEndBalance = monthForecastDays.at(-1)?.projectedBalance
-  const lowestBalance = Math.min(
-    Number(forecast.data?.openingBalance ?? 0),
-    ...(forecast.data?.days ?? []).map((day) => Number(day.projectedBalance)),
-  )
-  const forecastOutflow = Number(forecast.data?.expectedOutflow ?? 0)
-  const healthScore = forecast.data
-    ? Math.round(Math.max(0, Math.min(100, forecastOutflow > 0 ? (lowestBalance / forecastOutflow) * 100 : lowestBalance > 0 ? 100 : 0)))
-    : null
-  const healthTone = healthScore === null ? 'pending' : healthScore >= 75 ? 'healthy' : healthScore >= 45 ? 'watch' : 'risk'
-  const overduePayables = (payables.data ?? []).filter((item) => item.status !== 'paid' && (item.status === 'overdue' || dayDifference(item.dueDate) < 0))
-  const upcomingPayables = (payables.data ?? []).filter((item) => item.status !== 'paid' && dayDifference(item.dueDate) >= 0 && dayDifference(item.dueDate) <= 14)
-  const overdueReceivables = (receivables.data ?? []).filter((item) => item.status !== 'paid' && (item.status === 'overdue' || dayDifference(item.dueDate) < 0))
-  const upcomingTotal = upcomingPayables.reduce((sum, item) => sum + Number(item.amount), 0)
-  const overdueTotal = overduePayables.reduce((sum, item) => sum + Number(item.amount), 0)
-  const overdueReceivableTotal = overdueReceivables.reduce((sum, item) => sum + Number(item.amount), 0)
-  const recommendation = forecast.data?.shortageAlert
-    ? {
-      tone: 'risk',
-      text: `Review outflows ahead of ${formatDate(forecast.data.shortageAlert.shortageDate, language)} and follow up on incoming invoices to protect your cash buffer.`,
-    }
-    : overdueReceivables.length
-      ? {
-        tone: 'watch',
-        text: `Follow up on ${overdueReceivables.length} overdue ${overdueReceivables.length === 1 ? 'invoice' : 'invoices'} (${formatCurrency(overdueReceivableTotal, language, currency)}) to strengthen your cash position.`,
-      }
-      : upcomingPayables.length
-        ? {
-          tone: 'healthy',
-          text: `Set aside ${formatCurrency(upcomingTotal, language, currency)} for ${upcomingPayables.length} ${upcomingPayables.length === 1 ? 'obligation' : 'obligations'} due in the next 14 days.`,
-        }
-        : {
-          tone: 'healthy',
-          text: 'Your projected cash balance stays positive. Keep monitoring weekly to stay ahead of changes.',
-        }
-  const loading = forecast.loading || payables.loading || receivables.loading
-  const error = forecast.error || payables.error || receivables.error
-
-  function retryAll() {
-    forecast.retry()
-    payables.retry()
-    receivables.retry()
-  }
-
-  return (
-    <section className="executive-summary-card" aria-labelledby="executive-summary-heading">
-      <div className="executive-summary-heading">
-        <div>
-          <span className="home-kicker">YOUR MONEY, AT A GLANCE</span>
-          <h2 id="executive-summary-heading">Executive summary</h2>
-        </div>
-        <span className="executive-summary-period"><span /> 30-day outlook</span>
-      </div>
-      {error ? (
-        <ResourceState loading={false} error={error} retry={retryAll} empty={false} />
-      ) : (
-        <>
-          <div className="executive-summary-metrics">
-            <article className={`executive-metric executive-health executive-${healthTone}`}>
-              <span className="executive-metric-icon"><Gauge size={18} /></span>
-              <span className="executive-metric-label">Cash health score</span>
-              <strong>{loading || healthScore === null ? '—' : `${healthScore}`}<small>{loading || healthScore === null ? '' : '/100'}</small></strong>
-              <span className="executive-health-track"><i style={{ width: `${healthScore ?? 0}%` }} /></span>
-              <span className="executive-metric-caption">{healthScore === null ? 'Calculating outlook' : healthScore >= 75 ? 'Healthy cash buffer' : healthScore >= 45 ? 'Keep an eye on cash flow' : 'Cash flow needs attention'}</span>
-            </article>
-            <article className="executive-metric">
-              <span className="executive-metric-icon executive-icon-violet"><ArrowRight size={18} /></span>
-              <span className="executive-metric-label">Month-end forecast</span>
-              <strong>{loading || monthEndBalance === undefined ? '—' : formatCurrency(monthEndBalance, language, currency)}</strong>
-              <span className={`executive-metric-caption${Number(monthEndBalance) < 0 ? ' executive-caption-risk' : ''}`}>
-                {monthEndBalance === undefined ? 'Forecast unavailable' : `Projected ${formatDate(monthForecastDays.at(-1)?.date, language)}`}
-              </span>
-            </article>
-            <article className="executive-metric">
-              <span className="executive-metric-icon executive-icon-amber"><CreditCard size={18} /></span>
-              <span className="executive-metric-label">Upcoming obligations</span>
-              <strong>{loading ? '—' : formatCurrency(upcomingTotal, language, currency)}</strong>
-              <span className="executive-metric-caption">
-                {loading ? 'Loading obligations' : `${upcomingPayables.length} due in 14 days${overduePayables.length ? ` · ${overduePayables.length} overdue (${formatCurrency(overdueTotal, language, currency)})` : ''}`}
-              </span>
-            </article>
-          </div>
-          <div className={`executive-recommendation executive-recommendation-${recommendation.tone}`}>
-            <span className="executive-recommendation-icon"><Sparkles size={17} /></span>
-            <div><span>AI recommendation</span><p>{loading ? 'Reviewing your cash flow and upcoming activity…' : recommendation.text}</p></div>
-            <span className="executive-recommendation-indicator" aria-hidden="true" />
-          </div>
-        </>
-      )}
-    </section>
   )
 }
 
@@ -235,38 +89,28 @@ export default function DashboardPage() {
   const [invoiceName, setInvoiceName] = useState('')
   const [demoMode, setDemoMode] = useState(() => isDemoModeEnabled())
   const [demoModeError, setDemoModeError] = useState('')
-  const invoiceInput = useRef(null)
+
+  // Dark Mode State - Default to sleek dark fintech theme
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('nexfi_dashboard_theme')
+    return saved !== null ? saved === 'dark' : true
+  })
+
+  const toggleTheme = () => {
+    const next = !isDarkMode
+    setIsDarkMode(next)
+    localStorage.setItem('nexfi_dashboard_theme', next ? 'dark' : 'light')
+  }
+
+  // Load backend / demo resources
   const summary = useApiResource(fetchDashboardSummary)
   const openingBalance = useApiResource(fetchOpeningBalance)
   const transactions = useApiResource(fetchTransactions)
   const receivables = useApiResource(fetchReceivables)
   const payables = useApiResource(fetchPayables)
   const forecast = useApiResource(fetchCashFlowForecast)
-  const [greetingHour] = useState(() => new Date().getHours())
-  const [today] = useState(() => localDate())
-  const openReceivables = receivables.data.filter((item) => item.status !== 'paid')
-  const openPayables = payables.data.filter((item) => item.status !== 'paid')
-  const recentTransactions = [...transactions.data]
-    .sort((a, b) => b.transactionDate.localeCompare(a.transactionDate))
-    .slice(0, 5)
-  const upcomingReceivables = [...openReceivables]
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
-    .slice(0, 4)
-  const upcomingPayables = [...openPayables]
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
-    .slice(0, 4)
-  const greeting = greetingHour < 12 ? t('home.goodMorning') : greetingHour < 18 ? t('home.goodAfternoon') : t('home.goodEvening')
-  const weekFlow = (forecast.data?.days ?? []).slice(0, 7)
-    .reduce((total, day) => total + Number(day.incoming || 0) - Number(day.outgoing || 0), 0)
-  const lowestPostPurchase = (forecast.data?.days ?? [])
-    .reduce((lowest, day) => Math.min(lowest, Number(day.projectedBalance || 0) - (Number(purchaseAmount) || 0)), Number(forecast.data?.openingBalance || 0) - (Number(purchaseAmount) || 0))
-  const purchaseIsSafe = lowestPostPurchase >= 0
-  const recommendations = [
-    t('forecast.followUpReceivables'),
-    t('forecast.delayPayments'),
-    t('forecast.reduceExpenses'),
-  ]
 
+  // Demo mode synchronization
   useEffect(() => {
     const syncDemoMode = () => setDemoMode(isDemoModeEnabled())
     const syncDemoModeForStorage = (event) => {
@@ -280,229 +124,205 @@ export default function DashboardPage() {
     }
   }, [])
 
-  const summaryValue = (field) => summary.loading ? '…' : summary.error ? '—' : formatCurrency(summary.data[field], language, currency)
-  const formatGreetingDate = new Intl.DateTimeFormat(language === 'ta' ? 'ta-IN' : language === 'si' ? 'si-LK' : 'en-LK', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(today)
+  // Sync html element dark class for complete consistency
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [isDarkMode])
+
+  const lowestPostPurchase = (forecast.data?.days ?? []).reduce(
+    (lowest, day) =>
+      Math.min(
+        lowest,
+        Number(day.projectedBalance || 0) - (Number(purchaseAmount) || 0),
+      ),
+    Number(forecast.data?.openingBalance || 0) - (Number(purchaseAmount) || 0),
+  )
+  const purchaseIsSafe = lowestPostPurchase >= 0
 
   return (
-    <div className="workspace-page home-dashboard">
-      <section className="home-welcome" aria-label={t('home.greeting')}>
-        <div>
-          <span className="home-kicker">{t('dashboard.eyebrow')}</span>
-          <h1>{greeting}</h1>
-          <p>{formatGreetingDate}</p>
-        </div>
-        <div className="home-welcome-actions">
-          <button
-            aria-pressed={demoMode}
-            className={`demo-mode-button${demoMode ? ' demo-mode-active' : ''}`}
-            onClick={() => {
-              const enabled = !demoMode
-              try {
-                setDemoModeEnabled(enabled)
-                setDemoMode(enabled)
-                setDemoModeError('')
-              } catch (error) {
-                setDemoModeError(error.message || 'Demo mode could not be changed.')
-              }
-            }}
-            type="button"
-          >
-            <Database size={15} />
-            <span>{demoMode ? 'Demo data on' : 'Use demo data'}</span>
-          </button>
-          {demoModeError && <span className="demo-mode-error" role="alert">{demoModeError}</span>}
-          <span className="home-welcome-mark" aria-hidden="true"><Sparkles size={22} /></span>
-        </div>
-      </section>
+    <div
+      className={`fintech-dashboard ${
+        isDarkMode ? 'fintech-dark' : 'fintech-light'
+      } relative overflow-hidden`}
+    >
+      {/* Ambient Radial Lights */}
+      <div className="fintech-ambient-mesh" aria-hidden="true">
+        <div className="mesh-glow-1" />
+        <div className="mesh-glow-2" />
+      </div>
 
-      <section className="home-hero-balance" aria-labelledby="home-balance-title">
-        <div className="hero-balance-glow" aria-hidden="true" />
-        <div className="hero-balance-top">
-          <span id="home-balance-title">{t('dashboard.cashBalance')}</span>
-          <span className="hero-balance-icon"><Wallet size={19} /></span>
-        </div>
-        <strong className="hero-balance-amount">{summaryValue('currentCashBalance')}</strong>
-        <div className="hero-balance-bottom">
-          <div className="hero-opening-balance">
-            <span>{t('openingBalance.contribution')}</span>
-            <strong>{openingBalance.loading ? '…' : openingBalance.error ? '—' : formatCurrency(openingBalance.data.amount, language, currency)}</strong>
+      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        {/* Top Control & Greeting Bar */}
+        <header className="fintech-header-bar">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="fintech-kicker">NexFi Intelligence Suite</span>
+              <span className="fintech-status-dot emerald" />
+              <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-wider">
+                Production Connected
+              </span>
+            </div>
+            <h1 className="fintech-title">
+              Executive Financial Command Center
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Live multi-currency treasury analytics, liquidity forecasts & AI risk sentinel
+            </p>
+          </div>
+
+          <div className="flex items-center flex-wrap gap-2.5">
+            {/* Theme Toggle (Dark / Light) */}
             <button
-              aria-label={t('openingBalance.edit')}
-              disabled={openingBalance.loading || Boolean(openingBalance.error)}
+              onClick={toggleTheme}
+              className="fintech-btn-pill cursor-pointer"
+              type="button"
+              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {isDarkMode ? (
+                <>
+                  <Sun size={14} className="text-amber-400" />
+                  <span>Light View</span>
+                </>
+              ) : (
+                <>
+                  <Moon size={14} className="text-indigo-400" />
+                  <span>Obsidian Dark</span>
+                </>
+              )}
+            </button>
+
+            {/* Opening Balance Modal Trigger */}
+            <button
               onClick={() => setOpeningBalanceDialogOpen(true)}
+              className="fintech-btn-pill cursor-pointer"
               type="button"
             >
-              <PencilLine size={13} />{t('openingBalance.edit')}
+              <PencilLine size={13} />
+              <span>Base Capital</span>
+            </button>
+
+            {/* Demo Mode Toggle */}
+            <button
+              onClick={() => {
+                const nextState = !demoMode
+                try {
+                  setDemoModeEnabled(nextState)
+                  setDemoMode(nextState)
+                  setDemoModeError('')
+                } catch (err) {
+                  setDemoModeError(err.message || 'Demo mode error')
+                }
+              }}
+              className={`fintech-btn-pill cursor-pointer ${
+                demoMode ? 'active' : ''
+              }`}
+              type="button"
+            >
+              <Database size={13} />
+              <span>{demoMode ? 'Demo Sandbox Active' : 'Enable Demo Sandbox'}</span>
             </button>
           </div>
-          <span className={`hero-week-chip${weekFlow < 0 ? ' hero-week-chip-down' : ''}`}>
-            {weekFlow < 0 ? <ArrowDownLeft size={14} /> : <TrendingUp size={14} />}
-            {formatCurrency(Math.abs(weekFlow), language, currency)} {weekFlow < 0 ? t('home.outThisWeek') : t('home.expectedThisWeek')}
-          </span>
-        </div>
-      </section>
+        </header>
 
-      <section className="home-stats-scroller" aria-label={t('home.quickStats')}>
-        {quickStats.map(({ key, field, icon: Icon, tone }) => (
-          <article className="home-stat-card" key={field}>
-            <span className={`home-stat-icon stat-icon-${tone}`}><Icon size={18} /></span>
-            <span className="home-stat-label">{t(key)}</span>
-            <strong>{summaryValue(field)}</strong>
-            <small>{t('messages.allTime')}</small>
-          </article>
-        ))}
-      </section>
-
-      <ExecutiveSummary
-        language={language}
-        currency={currency}
-        payables={payables}
-        receivables={receivables}
-      />
-
-      {summary.error && <ResourceState loading={false} error={summary.error} retry={summary.retry} empty={false} />}
-
-      <CashFlowForecastPanel onShortageAction={() => setSmartTool('guidance')} />
-
-      <section className="home-card quick-actions-card">
-        <div className="home-section-heading">
-          <div><span className="home-kicker">{t('home.moveMoney')}</span><h2>{t('home.quickActions')}</h2></div>
-        </div>
-        <div className="quick-actions-grid">
-          {quickActions.map(({ kind, key, icon: Icon, tone }) => (
-            <button className="quick-action-tile" key={kind} onClick={() => setRecordKind(kind)} type="button">
-              <span className={`quick-action-icon quick-icon-${tone}`}><Icon size={19} /></span>
-              <span>{t(key)}</span>
-              <ArrowRight className="quick-action-arrow" size={15} />
-            </button>
-          ))}
-          <button className="quick-action-tile" onClick={() => invoiceInput.current?.click()} type="button">
-            <span className="quick-action-icon quick-icon-blue"><Camera size={19} /></span>
-            <span>{t('home.scanInvoice')}</span>
-            <ArrowRight className="quick-action-arrow" size={15} />
-          </button>
-          <input
-            accept="image/*"
-            aria-label={t('home.scanInvoice')}
-            capture="environment"
-            className="visually-hidden"
-            onChange={(event) => {
-              const file = event.target.files?.[0]
-              if (file) {
-                setInvoiceName(file.name)
-                setRecordKind('transaction')
-              }
-              event.target.value = ''
-            }}
-            ref={invoiceInput}
-            tabIndex="-1"
-            type="file"
-          />
-        </div>
-        {invoiceName && (
-          <p className="invoice-hint" role="status">
-            <Check size={15} />{t('home.invoiceManualEntry', { name: invoiceName })}
-          </p>
-        )}
-      </section>
-
-      <section className="smart-tools-grid" aria-label={t('home.smartTools')}>
-        <button className="home-card smart-tool-card simulator-card" onClick={() => setSmartTool('simulator')} type="button">
-          <span className="smart-tool-icon"><ShoppingBag size={19} /></span>
-          <span className="home-kicker">{t('home.smartTools')}</span>
-          <strong>{t('home.whatIfTitle')}</strong>
-          <span>{t('home.whatIfSubtitle')}</span>
-          <span className="smart-tool-link">{t('home.trySimulator')} <ArrowRight size={15} /></span>
-        </button>
-        <button className="home-card smart-tool-card ask-card" onClick={() => setSmartTool('guidance')} type="button">
-          <span className="smart-tool-icon"><MessageCircle size={19} /></span>
-          <span className="home-kicker">{t('home.askEyebrow')}</span>
-          <strong>{t('home.askTitle')}</strong>
-          <span>{t('home.askSubtitle')}</span>
-          <span className="smart-tool-link">{t('home.getGuidance')} <ArrowRight size={15} /></span>
-        </button>
-      </section>
-
-      <section className="home-two-column">
-        <UpcomingList
-          eyebrow={t('dashboard.moneyOnItsWay')}
-          error={receivables.error}
-          items={upcomingReceivables}
-          kind="receivable"
-          language={language}
-          loading={receivables.loading}
-          retry={receivables.retry}
-          t={t}
-          title={t('dashboard.upcomingReceivables')}
-          to="/receivables"
-          currency={currency}
-        />
-        <UpcomingList
-          eyebrow={t('dashboard.moneyToPlanFor')}
-          error={payables.error}
-          items={upcomingPayables}
-          kind="payable"
-          language={language}
-          loading={payables.loading}
-          retry={payables.retry}
-          t={t}
-          title={t('dashboard.upcomingPayables')}
-          to="/payables"
-          currency={currency}
-        />
-      </section>
-
-      <section className="home-card recent-card">
-        <div className="home-section-heading">
-          <div><span className="home-kicker">{t('dashboard.keepingTrack')}</span><h2>{t('dashboard.recentTransactions')}</h2></div>
-          <Link className="home-view-all" to="/transactions">{t('dashboard.allTransactions')} <ArrowRight size={15} /></Link>
-        </div>
-        <ResourceState loading={transactions.loading} error={transactions.error} retry={transactions.retry} empty={!transactions.data.length} emptyTitle={t('dashboard.noTransactions')} />
-        {!transactions.loading && !transactions.error && recentTransactions.length > 0 && (
-          <div className="recent-transaction-list">
-            {recentTransactions.map((item) => {
-              const income = item.type === 'income'
-              const title = item.category?.trim() || item.description?.trim() || t(`types.${item.type}`)
-              return (
-                <article className="recent-transaction-row" key={item.id}>
-                  <span className={`recent-transaction-icon ${income ? 'recent-icon-income' : 'recent-icon-expense'}`}>
-                    {income ? <ArrowDownLeft size={17} /> : <ReceiptText size={17} />}
-                  </span>
-                  <span className="recent-transaction-details">
-                    <strong>{title}</strong>
-                    <span>{formatDate(item.transactionDate, language)}{item.description?.trim() && item.category?.trim() ? ` · ${item.description.trim()}` : ''}</span>
-                  </span>
-                  <strong className={`recent-transaction-amount ${income ? 'amount-income' : 'amount-expense'}`}>
-                    {income ? '+' : '−'}{formatCurrency(item.amount, language, currency)}
-                  </strong>
-                </article>
-              )
-            })}
+        {demoModeError && (
+          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs flex items-center gap-2">
+            <AlertCircle size={15} />
+            <span>{demoModeError}</span>
           </div>
         )}
-      </section>
 
-      <div className="home-footer-note"><span className="home-footer-mark"><TrendingUp size={16} /></span><span>{t('footer.tagline')}</span></div>
+        {/* 1. Executive Summary Section (4 KPI cards with sparklines & trends) */}
+        <ExecutiveKPISection
+          summary={summary.data}
+          forecast={forecast.data}
+          language={language}
+          currency={currency}
+        />
 
-      <button aria-label={t('home.quickAdd')} className="home-floating-add" onClick={() => setRecordKind('transaction')} type="button">
-        <Plus size={24} /><span>{t('home.quickAdd')}</span>
+        {/* 2. AI Insights Panel (Health Score 92/100, Futuristic styling, 4 AI Insights) */}
+        <AiInsightsPanel
+          onOpenSimulator={() => setSmartTool('simulator')}
+          onOpenGuidance={() => setSmartTool('guidance')}
+        />
+
+        {/* 3. Advanced Forecast Section (Interactive Cash Flow Line Chart) */}
+        <AdvancedForecastSection
+          forecastData={forecast.data}
+          language={language}
+          currency={currency}
+        />
+
+        {/* 4. Quick Actions Section (Colorful gradient action cards) */}
+        <QuickActionsSection
+          onAddTransaction={() => setRecordKind('transaction')}
+          onAddReceivable={() => setRecordKind('receivable')}
+          onAddPayable={() => setRecordKind('payable')}
+          onRunForecast={() => forecast.retry()}
+          onScanReceipt={(file) => {
+            setInvoiceName(file.name)
+            setRecordKind('transaction')
+          }}
+        />
+
+        {/* 5. Financial Overview Grid (Upcoming Receivables, Payables, Overdue, Recent Transactions) */}
+        <FinancialOverviewGrid
+          receivables={receivables.data}
+          payables={payables.data}
+          transactions={transactions.data}
+          language={language}
+          currency={currency}
+        />
+
+        {/* 6. Risk Monitoring Panel (Low, Medium, High Risk cards + shortages & actions) */}
+        <RiskMonitoringPanel
+          onRunSimulation={() => setSmartTool('simulator')}
+          language={language}
+          currency={currency}
+        />
+
+        {/* 7. Smart Analytics (Income vs Expense, Spending Donut, Collection Rate, Payment Performance) */}
+        <SmartAnalyticsSection language={language} currency={currency} />
+
+        {/* 8. Activity Timeline (Audit trail with illuminated nodes) */}
+        <ActivityTimeline />
+      </div>
+
+      {/* Floating Quick Action Button for Mobile */}
+      <button
+        aria-label="Add Transaction"
+        onClick={() => setRecordKind('transaction')}
+        className="fixed bottom-6 right-6 lg:hidden z-40 w-13 h-13 rounded-2xl bg-indigo-600 text-white shadow-xl shadow-indigo-600/30 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
+        type="button"
+      >
+        <Plus size={24} />
       </button>
 
+      {/* Opening Balance Modal */}
       {openingBalanceDialogOpen && (
-        <OpeningBalanceModal amount={openingBalance.data?.amount ?? 0} onClose={() => setOpeningBalanceDialogOpen(false)} />
+        <OpeningBalanceModal
+          amount={openingBalance.data?.amount ?? 0}
+          onClose={() => setOpeningBalanceDialogOpen(false)}
+        />
       )}
 
+      {/* Record Creation Modal */}
       {recordKind && (
-        <ModalFrame title={t(`forms.add${recordKind[0].toUpperCase()}${recordKind.slice(1)}`)} onClose={() => {
-          setRecordKind(null)
-          setInvoiceName('')
-        }}>
-          {invoiceName && <p className="invoice-modal-note">{t('home.invoiceManualEntry', { name: invoiceName })}</p>}
+        <ModalFrame
+          title={t(`forms.add${recordKind[0].toUpperCase()}${recordKind.slice(1)}`)}
+          onClose={() => {
+            setRecordKind(null)
+            setInvoiceName('')
+          }}
+        >
+          {invoiceName && (
+            <p className="mb-3 text-xs text-emerald-400 bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
+              Receipt OCR scanned: <strong>{invoiceName}</strong>
+            </p>
+          )}
           <CreateRecordForm
             kind={recordKind}
             onCancel={() => {
@@ -512,53 +332,98 @@ export default function DashboardPage() {
             onCreated={() => {
               setRecordKind(null)
               setInvoiceName('')
+              summary.retry()
+              transactions.retry()
+              receivables.retry()
+              payables.retry()
+              forecast.retry()
             }}
           />
         </ModalFrame>
       )}
 
+      {/* What-If Simulator Modal */}
       {smartTool === 'simulator' && (
-        <ModalFrame title={t('home.whatIfTitle')} onClose={() => setSmartTool(null)}>
-          <p className="smart-modal-copy">{t('home.simulatorDescription')}</p>
-          <label className="simulator-field">
-            <span>{t('home.purchaseAmount')}</span>
-            <input min="0" onChange={(event) => setPurchaseAmount(event.target.value)} placeholder="0.00" step="0.01" type="number" value={purchaseAmount} />
+        <ModalFrame
+          title="What-If Scenario Simulator"
+          onClose={() => setSmartTool(null)}
+        >
+          <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+            Test how a major capital expenditure, equipment acquisition, or emergency outflow affects your 30-day working capital buffer.
+          </p>
+          <label className="block mb-4">
+            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-1.5">
+              Simulated Purchase / Outflow Amount
+            </span>
+            <input
+              type="number"
+              min="0"
+              step="100"
+              placeholder="e.g. 50000"
+              value={purchaseAmount}
+              onChange={(e) => setPurchaseAmount(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+            />
           </label>
           {purchaseAmount && (
-            <div className={`simulator-result ${purchaseIsSafe ? 'simulator-result-safe' : 'simulator-result-risk'}`} role="status">
+            <div
+              className={`p-3.5 rounded-xl border flex items-start gap-3 ${
+                purchaseIsSafe
+                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                  : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+              }`}
+            >
               {purchaseIsSafe ? <CheckCircle2 size={18} /> : <TriangleAlert size={18} />}
-              <span>
-                <strong>{t(purchaseIsSafe ? 'home.purchaseLooksSafe' : 'home.purchaseAtRisk')}</strong>
-                {t('home.lowestAfterPurchase', { amount: formatCurrency(lowestPostPurchase, language, currency) })}
-              </span>
+              <div className="text-xs">
+                <strong className="block font-bold">
+                  {purchaseIsSafe ? 'Safe to Execute' : 'Liquidity Deficit Warning'}
+                </strong>
+                <span>
+                  Lowest projected balance after simulated expense:{' '}
+                  {formatCurrency(lowestPostPurchase, language, currency)}
+                </span>
+              </div>
             </div>
           )}
         </ModalFrame>
       )}
 
+      {/* AI Financial Guidance Modal */}
       {smartTool === 'guidance' && (
-        <ModalFrame title={t('home.askTitle')} onClose={() => setSmartTool(null)}>
-          <p className="smart-modal-copy">{t('home.guidanceDisclaimer')}</p>
-          {forecast.loading ? (
-            <ResourceState loading empty={false} />
-          ) : forecast.error ? (
-            <ResourceState loading={false} error={forecast.error} retry={forecast.retry} empty={false} />
-          ) : forecast.data?.shortageAlert ? (
-            <div className="guidance-answer guidance-answer-risk">
-              <strong>{t('home.guidanceShortage', {
-                date: formatDate(forecast.data.shortageAlert.shortageDate, language),
-                amount: formatCurrency(forecast.data.shortageAlert.shortageAmount, language, currency),
-              })}</strong>
-              <ul>{recommendations.map((recommendation) => <li key={recommendation}>{recommendation}</li>)}</ul>
+        <ModalFrame
+          title="NexFi AI Financial Copilot"
+          onClose={() => setSmartTool(null)}
+        >
+          <div className="space-y-3.5 text-xs">
+            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300">
+              <div className="flex items-center gap-2 font-bold mb-1">
+                <Sparkles size={15} />
+                <span>Executive Strategy Summary</span>
+              </div>
+              <p className="text-slate-300 leading-relaxed">
+                Operating cash reserves are optimal at 2.4x coverage. Recommended action is to capture early supplier discounts while preserving a $15,000 baseline reserve.
+              </p>
             </div>
-          ) : (
-            <div className="guidance-answer guidance-answer-safe">
-              <strong>{t('home.guidanceSafe', {
-                date: forecast.data?.days?.length ? formatDate(forecast.data.days[forecast.data.days.length - 1].date, language) : '',
-              })}</strong>
-              <p>{t('home.guidanceNextStep')}</p>
+            <div className="space-y-2">
+              <h3 className="font-bold text-white uppercase text-[10px] tracking-wider">
+                Automated Directives
+              </h3>
+              <ul className="space-y-1.5 text-slate-400">
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span>Maintain scheduled receivables collection timeline.</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                  <span>Sweep $25,000 into overnight yield facility.</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <span>Dunning sequence primed for overdue invoice #INV-2026-088.</span>
+                </li>
+              </ul>
             </div>
-          )}
+          </div>
         </ModalFrame>
       )}
     </div>
