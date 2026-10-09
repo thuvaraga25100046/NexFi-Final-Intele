@@ -1,8 +1,13 @@
 import { useState } from 'react'
 import {
+  User,
+  AtSign,
+  Mail,
   Lock,
   Eye,
   EyeOff,
+  Globe,
+  ShieldCheck,
 } from 'lucide-react'
 import useTranslation from '../i18n/useTranslation.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -30,7 +35,6 @@ function SignInPage() {
     password: '',
     rememberMe: false,
   })
-  const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState({})
   const { login, toggleDemoMode } = useAuth()
   const [showDemoToggle, setShowDemoToggle] = useState(false)
@@ -77,9 +81,8 @@ function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-950 via-slate-900/90 to-slate-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-950">
       <div className="max-w-md w-full mx-auto px-4 py-8">
-        {/* Header */}
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-slate-100 mb-2">
             {t('auth.signIn')}
@@ -105,16 +108,15 @@ function SignInPage() {
           </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Email or Username */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+            <label htmlFor="credential" className="block text-sm font-medium text-slate-300 mb-2">
               {t('auth.email')}
             </label>
             <input
               type="email"
-              id="email"
+              id="credential"
               name="email"
               value={formData.email}
               onChange={handleChange}
@@ -154,23 +156,27 @@ function SignInPage() {
           </div>
 
           {/* Remember Me */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="rememberMe"
-                name="rememberMe"
-                checked={formData.rememberMe}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, rememberMe: e.target.checked }))
-                }
-                className="w-4 h-4 rounded border-slate-600/50 cursor-pointer"
-              />
-              <label htmlFor="rememberMe" className="text-sm text-slate-300 cursor-pointer">
-                {t('auth.rememberMe')}
-              </label>
-            </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              name="rememberMe"
+              checked={formData.rememberMe}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, rememberMe: e.target.checked }))
+              }
+              className="w-4 h-4 rounded border-slate-600/50 cursor-pointer"
+            />
+            <label htmlFor="rememberMe" className="text-sm text-slate-300 cursor-pointer">
+              {t('auth.rememberMe')}
+            </label>
+          </div>
+          {errors.general && (
+            <p className="mt-2 text-xs text-rose-400">{errors.general}</p>
+          )}
 
+          {/* Forgot Password link */}
+          <div className="text-right mt-2">
             <a
               href="#"
               className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors underline"
@@ -179,18 +185,12 @@ function SignInPage() {
             </a>
           </div>
 
-          {errors.general && (
-            <p className="mt-2 text-xs text-rose-400">{errors.general}</p>
-          )}
-
           {/* Submit button */}
           <button
             type="submit"
             disabled={isSubmitting}
             className={`w-full py-3 px-4 rounded-xl font-medium transition-all ${
-              isSubmitting
-                ? 'bg-slate-600/50 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg'
+              isSubmitting ? 'bg-slate-600/50 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg'}
             }`}
           >
             {isSubmitting ? (
@@ -204,7 +204,7 @@ function SignInPage() {
           </button>
         </form>
 
-        {/* Divider */}
+        {/* Or continue with */}
         <div className="mt-6 flex items-center gap-4">
           <span className="flex-1 h-px bg-slate-600/50"></span>
           <span className="text-sm text-slate-500">Or continue with</span>
@@ -217,33 +217,17 @@ function SignInPage() {
             type="button"
             className="flex-1 py-2 px-4 rounded-xl bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 transition-colors text-sm flex items-center justify-center"
           >
+            <Globe size={16} className="mr-2" />
             Google
           </button>
           <button
             type="button"
             className="flex-1 py-2 px-4 rounded-xl bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 transition-colors text-sm flex items-center justify-center"
           >
+            <ShieldCheck size={16} className="mr-2" />
             GitHub
           </button>
         </div>
-
-        {/* Demo mode toggle */}
-        {showDemoToggle && (
-          <div className="mt-6 p-4 rounded-xl bg-indigo-600/20 border border-indigo-600/30 text-center">
-            <p className="text-sm text-indigo-300">
-              <strong>{t('dashboard.demoActive')}</strong> {t('dashboard.demoDescription')}
-            </p>
-            <button
-              onClick={() => {
-                toggleDemoMode(false)
-                setShowDemoToggle(false)
-              }}
-              className="mt-2 text-xs text-indigo-300 hover:text-indigo-200 transition-colors"
-            >
-              {t('auth.exitDemo')}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   )
