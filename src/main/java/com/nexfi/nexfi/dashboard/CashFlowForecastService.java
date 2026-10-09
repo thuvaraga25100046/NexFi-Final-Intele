@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.nexfi.nexfi.payable.Payable;
 import com.nexfi.nexfi.payable.PayableRepository;
@@ -40,11 +41,19 @@ public class CashFlowForecastService {
         this.openingBalanceService = openingBalanceService;
     }
 
-    public CashFlowForecast getForecast() {
+    public CashFlowForecast getForecast(Integer horizonDays) {
+        if (horizonDays != null && !Set.of(30, 60, 90).contains(horizonDays)) {
+            throw new IllegalArgumentException("Forecast horizon must be 30, 60, or 90 days.");
+        }
+
         LocalDate today = LocalDate.now();
         LocalDate firstDay = today.plusDays(1);
-        LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
-        int forecastDays = Math.toIntExact(ChronoUnit.DAYS.between(today, lastDay));
+        LocalDate lastDay = horizonDays == null
+                ? today.withDayOfMonth(today.lengthOfMonth())
+                : today.plusDays(horizonDays);
+        int forecastDays = horizonDays == null
+                ? Math.toIntExact(ChronoUnit.DAYS.between(today, lastDay))
+                : horizonDays;
         Map<LocalDate, BigDecimal> incomingByDate = new HashMap<>();
         Map<LocalDate, BigDecimal> outgoingByDate = new HashMap<>();
         BigDecimal openingBalance = openingBalanceService.getCurrent().getAmount();
@@ -89,7 +98,7 @@ public class CashFlowForecastService {
             days.add(new CashFlowForecastDay(date, incoming, outgoing, projectedBalance));
         }
 
-            CashShortageAlert shortageAlert = openingBalance.signum() < 0
+        CashShortageAlert shortageAlert = openingBalance.signum() < 0
                 ? createShortageAlert(today, today, openingBalance)
                 : days.stream()
                     .filter(day -> day.projectedBalance().signum() < 0)
@@ -97,7 +106,7 @@ public class CashFlowForecastService {
                     .map(day -> createShortageAlert(today, day.date(), day.projectedBalance()))
                     .orElse(null);
 
-            return new CashFlowForecast(
+        return new CashFlowForecast(
                 openingBalance,
                 expectedInflow,
                 expectedOutflow,
@@ -106,14 +115,14 @@ public class CashFlowForecastService {
                 shortageAlert);
     }
 
-            private CashShortageAlert createShortageAlert(
-                LocalDate today,
-                LocalDate shortageDate,
-                BigDecimal projectedBalance) {
-            long daysRemaining = ChronoUnit.DAYS.between(today, shortageDate);
-            String severity = daysRemaining <= 3 ? "CRITICAL" : daysRemaining <= 7 ? "HIGH" : "MEDIUM";
-            return new CashShortageAlert(projectedBalance.abs(), shortageDate, daysRemaining, severity);
-            }
+    private CashShortageAlert createShortageAlert(
+            LocalDate today,
+            LocalDate shortageDate,
+            BigDecimal projectedBalance) {
+        long daysRemaining = ChronoUnit.DAYS.between(today, shortageDate);
+        String severity = daysRemaining <= 3 ? "CRITICAL" : daysRemaining <= 7 ? "HIGH" : "MEDIUM";
+        return new CashShortageAlert(projectedBalance.abs(), shortageDate, daysRemaining, severity);
+    }
 
     private LocalDate forecastDate(LocalDate dueDate, LocalDate firstDay) {
         return dueDate.isBefore(firstDay) ? firstDay : dueDate;

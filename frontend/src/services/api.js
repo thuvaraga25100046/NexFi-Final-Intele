@@ -43,7 +43,10 @@ export const fetchTransactions = (signal) => apiGet('transactions', { signal })
 export const fetchReceivables = (signal) => apiGet('receivables', { signal })
 export const fetchPayables = (signal) => apiGet('payables', { signal })
 export const fetchDashboardSummary = (signal) => apiGet('dashboard/summary', { signal })
-export const fetchCashFlowForecast = (signal) => apiGet('dashboard/forecast', { signal })
+export const fetchCashFlowForecast = (signal, days) => apiGet('dashboard/forecast', {
+  signal,
+  params: days ? { days } : undefined,
+})
 export const fetchOpeningBalance = (signal) => apiGet('opening-balance', { signal })
 
 export async function saveOpeningBalance(payload) {

@@ -13,7 +13,7 @@ const applicationLinks = [
 ]
 
 export default function SiteHeader({ variant = 'application' }) {
-  const { t } = useTranslation()
+  const { t, language, setLanguage } = useTranslation()
   const [menuOpen, setMenuOpen] = useState(false)
   const marketing = variant === 'marketing'
   const closeMenu = () => setMenuOpen(false)
@@ -48,8 +48,13 @@ export default function SiteHeader({ variant = 'application' }) {
             <Link className="button button-dark nav-cta" to="/dashboard">{t('marketing.getStarted')} <ArrowUpRight size={16} /></Link>
           ) : (
             <>
+              <div className="language-switcher" role="group" aria-label={t('language.label')}>
+                <button aria-pressed={language === 'en'} onClick={() => setLanguage('en')} type="button">EN</button>
+                <button aria-pressed={language === 'si'} onClick={() => setLanguage('si')} type="button">සිං</button>
+                <button aria-pressed={language === 'ta'} onClick={() => setLanguage('ta')} type="button">தமிழ்</button>
+              </div>
               <Link className="button button-dark nav-cta" to="/dashboard">{t('navigation.overview')} <ArrowUpRight size={16} /></Link>
-              <span className="app-profile" aria-label={t('navigation.account')}><CircleUserRound size={19} /><span>JD</span></span>
+              <Link className="app-profile" aria-label={t('navigation.account')} to="/settings"><CircleUserRound size={19} /><span>NP</span></Link>
             </>
           )}
           <button

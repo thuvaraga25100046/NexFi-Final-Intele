@@ -144,6 +144,32 @@ class DashboardSummaryControllerTests {
                 .andExpect(jsonPath("$.data.shortageAlert.severity").value(shortageOffset <= 3 ? "CRITICAL" : "HIGH"));
     }
 
+    @Test
+    void forecastsRequestedHorizonAndIncludesFutureReceivables() throws Exception {
+        LocalDate dueDate = LocalDate.now().plusDays(45);
+        createReceivable("500.00", "pending", dueDate);
+
+        mockMvc.perform(get("/api/dashboard/forecast").param("days", "60"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.days.length()").value(60))
+                .andExpect(jsonPath("$.data.days[44].date").value(dueDate.toString()))
+                .andExpect(jsonPath("$.data.days[44].incoming").value(500.00))
+                .andExpect(jsonPath("$.data.expectedInflow").value(500.00))
+                .andExpect(jsonPath("$.data.projectedBalance").value(500.00));
+
+        for (int horizon : new int[] {30, 90}) {
+            mockMvc.perform(get("/api/dashboard/forecast").param("days", String.valueOf(horizon)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.days.length()").value(horizon));
+        }
+    }
+
+    @Test
+    void rejectsUnsupportedForecastHorizons() throws Exception {
+        mockMvc.perform(get("/api/dashboard/forecast").param("days", "45"))
+                .andExpect(status().isBadRequest());
+    }
+
     private void createTransaction(String type, String amount) throws Exception {
         createTransaction(type, amount, LocalDate.parse("2026-10-01"));
     }

@@ -1,9 +1,12 @@
 package com.nexfi.nexfi.dashboard;
 
 import com.nexfi.nexfi.api.ApiResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/dashboard")
@@ -25,7 +28,10 @@ public class DashboardSummaryController {
     }
 
     @GetMapping("/forecast")
-    public ApiResponse<CashFlowForecast> getForecast() {
-        return ApiResponse.success("Cash flow forecast retrieved", cashFlowForecastService.getForecast());
+    public ApiResponse<CashFlowForecast> getForecast(@RequestParam(required = false) Integer days) {
+        if (days != null && days != 30 && days != 60 && days != 90) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Forecast horizon must be 30, 60, or 90 days.");
+        }
+        return ApiResponse.success("Cash flow forecast retrieved", cashFlowForecastService.getForecast(days));
     }
 }

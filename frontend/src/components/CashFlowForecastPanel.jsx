@@ -1,119 +1,184 @@
-import { ArrowDownLeft, ArrowUpRight, TriangleAlert } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { ArrowDownLeft, ArrowUpRight, CheckCircle2, TriangleAlert } from 'lucide-react'
 import ResourceState from './ResourceState.jsx'
 import useApiResource from '../hooks/useApiResource.js'
 import { fetchCashFlowForecast } from '../services/api.js'
 import useTranslation from '../i18n/useTranslation.js'
 import { formatCurrency, formatDate } from '../i18n/formatters.js'
 
-function ForecastChart({ days, language, chartLabel, dateOptions }) {
-  const width = 900
-  const top = 12
-  const bottom = 178
+const horizons = [30, 60, 90]
+const chart = { width: 720, height: 260, left: 76, right: 14, top: 18, bottom: 222 }
+
+function splitArea(points, zeroY) {
+  if (!points.length) return ''
+  return `M ${points[0].x} ${zeroY} ${points.map(({ x, y }) => `L ${x} ${y}`).join(' ')} L ${points[points.length - 1].x} ${zeroY} Z`
+}
+
+function CashFlowChart({ days, language, currency, safetyBuffer, chartLabel, t }) {
   const balances = days.map((day) => Number(day.projectedBalance) || 0)
-  const minBalance = Math.min(0, ...balances)
-  const maxBalance = Math.max(0, ...balances)
-  const range = maxBalance - minBalance || 1
-  const yForBalance = (balance) => bottom - ((balance - minBalance) / range) * (bottom - top)
-  const points = balances.map((balance, index) => ({
-    x: 14 + (index * (width - 28)) / Math.max(days.length - 1, 1),
-    y: yForBalance(balance),
-  }))
-  const pointString = points.map(({ x, y }) => `${x},${y}`).join(' ')
-  const areaString = points.length
-    ? `${points[0].x},${yForBalance(0)} ${pointString} ${points[points.length - 1].x},${yForBalance(0)}`
-    : ''
-  const lastPoint = points[points.length - 1]
+  const minBalance = Math.min(-safetyBuffer, ...balances)
+  const maxBalance = Math.max(safetyBuffer, ...balances)
+  const padding = Math.max((maxBalance - minBalance) * 0.12, 100)
+  const min = minBalance - padding
+  const max = maxBalance + padding
+  const plotWidth = chart.width - chart.left - chart.right
+  const plotHeight = chart.bottom - chart.top
+  const xForIndex = (index) => chart.left + (index * plotWidth) / Math.max(days.length - 1, 1)
+  const yForBalance = (balance) => chart.top + ((max - balance) / (max - min)) * plotHeight
+  const points = balances.map((balance, index) => ({ x: xForIndex(index), y: yForBalance(balance) }))
+  const zeroY = yForBalance(0)
+  const bufferY = yForBalance(safetyBuffer)
+  const area = splitArea(points, zeroY)
+  const firstShortageIndex = balances.findIndex((balance) => balance < 0)
+  const tickValues = [0, 1, 2, 3].map((index) => min + ((max - min) * index) / 3)
+  const dateOptions = { month: 'short', day: 'numeric' }
+  const dateTicks = [0, Math.floor((days.length - 1) / 2), days.length - 1]
 
   return (
-    <div className="cash-flow-chart-wrap">
+    <div className="forecast-chart" role="group" aria-label={chartLabel}>
       <svg
         aria-label={chartLabel}
-        className="cash-flow-chart"
-        preserveAspectRatio="none"
+        className="forecast-chart-svg"
         role="img"
-        viewBox={`0 0 ${width} 190`}
+        viewBox={`0 0 ${chart.width} ${chart.height}`}
+        preserveAspectRatio="none"
       >
-        {[top, (top + bottom) / 2, bottom].map((y) => (
-          <line className="cash-flow-gridline" key={y} x1="8" x2={width - 8} y1={y} y2={y} />
-        ))}
-        <line className="cash-flow-zero-line" x1="8" x2={width - 8} y1={yForBalance(0)} y2={yForBalance(0)} />
-        {areaString && <polygon className="cash-flow-area" points={areaString} />}
-        {pointString && <polyline className="cash-flow-line" points={pointString} />}
-        {lastPoint && <circle className="cash-flow-endpoint" cx={lastPoint.x} cy={lastPoint.y} r="4" />}
+        <defs>
+          <clipPath id="forecast-positive-area">
+            <rect x={chart.left} y={chart.top} width={plotWidth} height={Math.max(0, zeroY - chart.top)} />
+          </clipPath>
+          <clipPath id="forecast-negative-area">
+            <rect x={chart.left} y={zeroY} width={plotWidth} height={Math.max(0, chart.bottom - zeroY)} />
+          </clipPath>
+        </defs>
+        {tickValues.map((value) => {
+          const y = yForBalance(value)
+          return (
+            <g key={value}>
+              <line className="forecast-grid-line" x1={chart.left} x2={chart.width - chart.right} y1={y} y2={y} />
+              <text className="forecast-axis-label" x={chart.left - 9} y={y + 4} textAnchor="end">
+                {formatCurrency(value, language, currency)}
+              </text>
+            </g>
+          )
+        })}
+        <line className="forecast-zero-line" x1={chart.left} x2={chart.width - chart.right} y1={zeroY} y2={zeroY} />
+        <line className="forecast-buffer-line" x1={chart.left} x2={chart.width - chart.right} y1={bufferY} y2={bufferY} />
+        <path d={area} fill="#2f8055" opacity=".2" clipPath="url(#forecast-positive-area)" />
+        <path d={area} fill="#c2493d" opacity=".25" clipPath="url(#forecast-negative-area)" />
+        <polyline className="forecast-balance-line" points={points.map(({ x, y }) => `${x},${y}`).join(' ')} />
+        {firstShortageIndex >= 0 && (
+          <g>
+            <line
+              className="forecast-shortage-marker"
+              x1={points[firstShortageIndex].x}
+              x2={points[firstShortageIndex].x}
+              y1={chart.top}
+              y2={chart.bottom}
+            />
+            <circle
+              className="forecast-shortage-dot"
+              cx={points[firstShortageIndex].x}
+              cy={points[firstShortageIndex].y}
+              r="5"
+            >
+              <title>
+                {t('home.shortageMarker', {
+                  date: formatDate(days[firstShortageIndex].date, language, dateOptions),
+                  amount: formatCurrency(Math.abs(balances[firstShortageIndex]), language, currency),
+                })}
+              </title>
+            </circle>
+          </g>
+        )}
       </svg>
-      <div className="cash-flow-date-range"><span>{formatDate(days[0].date, language, dateOptions)}</span><span>{formatDate(days[days.length - 1].date, language, dateOptions)}</span></div>
+      <div className="forecast-date-ticks" aria-hidden="true">
+        {dateTicks.map((index) => <span key={index}>{formatDate(days[index].date, language, dateOptions)}</span>)}
+      </div>
+      <div className="forecast-chart-legend">
+        <span><i className="legend-green" />{t('home.balance')}</span>
+        <span><i className="legend-zero" />{t('home.zeroBalance')}</span>
+        <span><i className="legend-buffer" />{t('home.safetyBuffer', { amount: formatCurrency(safetyBuffer, language, currency) })}</span>
+      </div>
     </div>
   )
 }
 
-function CashShortageWarning({ alert, language, currency, t }) {
-  if (!alert) return null
-
-  const severityKey = alert.severity.toLowerCase()
-  const recommendations = [
-    'forecast.followUpReceivables',
-    'forecast.delayPayments',
-    'forecast.reduceExpenses',
-  ]
-
-  return (
-    <section className={`cash-shortage-warning severity-${severityKey}`} aria-labelledby="cash-shortage-title" role="alert">
-      <div className="cash-shortage-icon"><TriangleAlert size={19} /></div>
-      <div className="cash-shortage-content">
-        <div className="cash-shortage-heading">
-          <h2 id="cash-shortage-title">{t('forecast.shortageTitle')}</h2>
-          <span className="cash-shortage-severity">{t(`forecast.severity.${severityKey}`)}</span>
-        </div>
-        <p className="cash-shortage-summary">
-          {t('forecast.shortageSummary', {
-            amount: formatCurrency(alert.shortageAmount, language, currency),
-            date: formatDate(alert.shortageDate, language),
-            days: alert.daysRemaining,
-          })}
-        </p>
-        <ul className="cash-shortage-recommendations">
-          {recommendations.map((key) => <li key={key}>{t(key)}</li>)}
-        </ul>
-      </div>
-    </section>
-  )
-}
-
-export default function CashFlowForecastPanel() {
+export default function CashFlowForecastPanel({ onShortageAction }) {
   const { t, language, currency } = useTranslation()
-  const forecast = useApiResource(fetchCashFlowForecast)
-  const days = forecast.data?.days ?? []
+  const [horizon, setHorizon] = useState(30)
+  const loadForecast = useCallback((signal) => fetchCashFlowForecast(signal, horizon), [horizon])
+  const forecast = useApiResource(loadForecast)
+  const data = forecast.data
+  const days = data?.days ?? []
+  const safetyBuffer = Math.max(0, Number(data?.expectedOutflow ?? 0) * 0.1)
+  const shortage = data?.shortageAlert
+  const lastDate = days.length ? formatDate(days[days.length - 1].date, language) : ''
 
   return (
-    <>
-      {!forecast.loading && !forecast.error && (
-        <CashShortageWarning alert={forecast.data?.shortageAlert} language={language} currency={currency} t={t} />
-      )}
-      <section className="workspace-panel cash-flow-forecast">
-        <div className="panel-heading">
-          <div><span className="panel-eyebrow">{t('forecast.eyebrow')}</span><h2>{t('forecast.title')}</h2></div>
-          <span className="forecast-horizon">{t('forecast.horizon')}</span>
+    <section className="home-card forecast-card" aria-labelledby="forecast-heading">
+      <div className="home-section-heading forecast-heading">
+        <div>
+          <span className="home-kicker">{t('forecast.eyebrow')}</span>
+          <h2 id="forecast-heading">{t('forecast.title')}</h2>
+          <p>{t('home.forecastSubtitle')}</p>
         </div>
-        <p className="forecast-description">{t('forecast.description')}</p>
-        <ResourceState
-          loading={forecast.loading}
-          error={forecast.error}
-          retry={forecast.retry}
-          empty={!days.length}
-          emptyTitle={t('forecast.empty')}
-        />
-        {!forecast.loading && !forecast.error && days.length > 0 && (
-          <>
-            <div className="forecast-totals">
-              <div className="forecast-total"><span>{t('forecast.openingCash')}</span><strong>{formatCurrency(forecast.data.openingBalance, language, currency)}</strong></div>
-              <div className="forecast-total forecast-inflow"><span><ArrowDownLeft size={13} /> {t('forecast.expectedIn')}</span><strong>{formatCurrency(forecast.data.expectedInflow, language, currency)}</strong></div>
-              <div className="forecast-total forecast-outflow"><span><ArrowUpRight size={13} /> {t('forecast.expectedOut')}</span><strong>{formatCurrency(forecast.data.expectedOutflow, language, currency)}</strong></div>
-              <div className="forecast-total forecast-projected"><span>{t('forecast.projectedEnd')}</span><strong>{formatCurrency(forecast.data.projectedBalance, language, currency)}</strong></div>
-            </div>
-            <ForecastChart days={days} language={language} chartLabel={t('forecast.chartLabel')} dateOptions={{ month: 'short', day: 'numeric' }} />
-          </>
-        )}
-      </section>
-    </>
+        <div className="horizon-switch" role="group" aria-label={t('home.forecastRange')}>
+          {horizons.map((value) => (
+            <button
+              aria-pressed={horizon === value}
+              className={horizon === value ? 'horizon-selected' : ''}
+              key={value}
+              onClick={() => setHorizon(value)}
+              type="button"
+            >
+              {t('home.days', { count: value })}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {shortage ? (
+        <div className={`home-alert home-alert-${String(shortage.severity).toLowerCase()}`} role="alert">
+          <span className="home-alert-icon"><TriangleAlert size={19} /></span>
+          <div className="home-alert-copy">
+            <strong>{t('home.shortageNotice', {
+              date: formatDate(shortage.shortageDate, language),
+              amount: formatCurrency(shortage.shortageAmount, language, currency),
+            })}</strong>
+            <button className="home-alert-action" onClick={onShortageAction} type="button">
+              {t('home.avoidShortage')}
+            </button>
+          </div>
+        </div>
+      ) : (
+        !forecast.loading && !forecast.error && days.length > 0 && (
+          <div className="home-alert home-alert-safe">
+            <span className="home-alert-icon"><CheckCircle2 size={19} /></span>
+            <strong>{t('home.safeThrough', { date: lastDate })}</strong>
+          </div>
+        )
+      )}
+
+      <ResourceState loading={forecast.loading} error={forecast.error} retry={forecast.retry} empty={!days.length} emptyTitle={t('forecast.empty')} />
+      {!forecast.loading && !forecast.error && days.length > 0 && (
+        <>
+          <CashFlowChart
+            chartLabel={t('home.forecastChartLabel', { count: horizon })}
+            currency={currency}
+            days={days}
+            language={language}
+            safetyBuffer={safetyBuffer}
+            t={t}
+          />
+          <div className="forecast-summary-grid">
+            <div><span>{t('forecast.openingCash')}</span><strong>{formatCurrency(data.openingBalance, language, currency)}</strong></div>
+            <div className="forecast-summary-in"><span><ArrowDownLeft size={14} />{t('forecast.expectedIn')}</span><strong>{formatCurrency(data.expectedInflow, language, currency)}</strong></div>
+            <div className="forecast-summary-out"><span><ArrowUpRight size={14} />{t('forecast.expectedOut')}</span><strong>{formatCurrency(data.expectedOutflow, language, currency)}</strong></div>
+            <div><span>{t('forecast.projectedEnd')}</span><strong className={Number(data.projectedBalance) < 0 ? 'forecast-negative-value' : ''}>{formatCurrency(data.projectedBalance, language, currency)}</strong></div>
+          </div>
+        </>
+      )}
+    </section>
   )
 }
