@@ -1,20 +1,16 @@
 import { useEffect, useState } from 'react'
 import {
-  AlertCircle,
   ArrowDownLeft,
   ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
   Bot,
-  Calendar,
   CheckCircle2,
   ChevronRight,
   CreditCard,
   Database,
   FilePlus2,
   PencilLine,
-  Plus,
-  Receipt,
   ShieldCheck,
   Sparkles,
   TrendingUp,
@@ -24,7 +20,6 @@ import {
 import { Link } from 'react-router-dom'
 import CreateRecordForm from '../components/CreateRecordForm.jsx'
 import OpeningBalanceModal from '../components/OpeningBalanceModal.jsx'
-import ResourceState from '../components/ResourceState.jsx'
 import useApiResource from '../hooks/useApiResource.js'
 import {
   fetchCashFlowForecast,
@@ -36,7 +31,6 @@ import useTranslation from '../i18n/useTranslation.js'
 import { formatCurrency, formatDate } from '../i18n/formatters.js'
 import {
   DEMO_MODE_CHANGED_EVENT,
-  DEMO_MODE_KEY,
   isDemoModeEnabled,
   setDemoModeEnabled,
 } from '../services/demoData.js'
@@ -65,7 +59,7 @@ function CompactSparkline({ data, color, width = 80, height = 24 }) {
   )
 }
 
-function CompactForecastChart({ days = [], openingBalance = 148250, language, currency }) {
+function CompactForecastChart({ days = [], language, currency, t }) {
   const width = 540
   const height = 180
   const padding = { top: 15, right: 20, bottom: 25, left: 55 }
@@ -156,7 +150,7 @@ function CompactForecastChart({ days = [], openingBalance = 148250, language, cu
           textAnchor="start"
           className="fill-slate-400 text-[10px]"
         >
-          Today
+          {t ? t('dashboard.chartToday') : 'Today'}
         </text>
         <text
           x={width - padding.right}
@@ -164,7 +158,7 @@ function CompactForecastChart({ days = [], openingBalance = 148250, language, cu
           textAnchor="end"
           className="fill-slate-400 text-[10px]"
         >
-          +30 Days
+          {t ? t('dashboard.chart30Days') : '+30 Days'}
         </text>
       </svg>
     </div>
@@ -199,6 +193,32 @@ function ModalFrame({ title, onClose, children }) {
   )
 }
 
+function KPICard({ title, value, trend, trendLabel, icon, iconBg, color, }) {
+  return (
+    <article className="p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-indigo-400/40 transition-colors">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          {title}
+        </span>
+        <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center`}>
+          <icon />
+        </div>
+      </div>
+      <div>
+        <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          {value}
+        </div>
+      </div>
+      <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+        <span className="flex items-center gap-1">
+          <TrendingUp size={12} className="text-emerald-500" /> +{trend}%
+        </span>
+        <CompactSparkline data={[110, 115, 120, 128, 134, 142, 148]} color="#10b981" width={60} height={18} />
+      </div>
+    </article>
+  )
+}
+
 export default function DashboardPage() {
   const { t, language, currency } = useTranslation()
   const [openingBalanceDialogOpen, setOpeningBalanceDialogOpen] = useState(false)
@@ -210,19 +230,35 @@ export default function DashboardPage() {
   const transactions = useApiResource(fetchTransactions)
   const forecast = useApiResource(fetchCashFlowForecast)
 
-  const balance = Number(summary.data?.currentCashBalance ?? 148250)
+  const balance = Number(summary.data?.currentCashBalance ?? openingBalance.data?.amount ?? 148250)
   const income = Number(summary.data?.totalIncome ?? 42600)
   const expenses = Number(summary.data?.totalExpenses ?? 18340)
+  const totalReceivables = Number(summary.data?.totalReceivables ?? 0)
+  const totalPayables = Number(summary.data?.totalPayables ?? 0)
 
   // 30-day forecast end balance
   const forecastEnd = forecast.data?.days?.length
     ? Number(forecast.data.days[forecast.data.days.length - 1].projectedBalance)
     : balance + (income - expenses) * 0.95
 
+  // Financial health score calculation
+  const healthScore = Math.round(
+    50 +
+      (balance / 200000) * 20 +
+      (income > 0 ? Math.min(10, Math.round(income / 5000)) : 0) +
+      (totalReceivables > 0 ? Math.min(10, Math.round(totalReceivables / 25000)) : 0) -
+      (totalPayables > 0 ? Math.min(10, Math.round(totalPayables / 25000)) : 0)
+  )
+  const healthColor = healthScore >= 80 ? 'emerald' : healthScore >= 60 ? 'indigo' : 'rose'
+
   // Recent 5 transactions
   const recentList = [...(transactions.data || [])]
     .sort((a, b) => (b.transactionDate || '').localeCompare(a.transactionDate || ''))
     .slice(0, 5)
+
+  // Forecast data for mini chart
+  const forecastDays = forecast.data?.days || []
+  const forecastMiniData = forecastDays.map((d) => Number(d.projectedBalance))
 
   useEffect(() => {
     const syncDemoMode = () => setDemoMode(isDemoModeEnabled())
@@ -231,29 +267,35 @@ export default function DashboardPage() {
   }, [])
 
   return (
-    <div className="workspace-page max-w-6xl mx-auto pb-12">
-      {/* Top Welcome Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+    <div className="fintech-dashboard max-w-7xl mx-auto pb-12">
+      {/* Ambient background lights */}
+      <div className="fintech-ambient-mesh">
+        <div className="mesh-glow-1" />
+        <div className="mesh-glow-2" />
+      </div>
+
+      {/* Top Control Bar */}
+      <header className="fintech-header-bar mb-6">
         <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-            Financial Executive Command
+          <span className="fintech-kicker block mb-1">
+            {t('dashboard.executiveCommand')}
           </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Financial Overview
+          <h1 className="fintech-title">
+            {t('dashboard.overviewTitle')}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Live working capital summary, cash flow trajectory, and AI intelligence
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {t('dashboard.overviewSubtitle')}
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setOpeningBalanceDialogOpen(true)}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 shadow-sm hover:border-slate-400 transition-all flex items-center gap-1.5 cursor-pointer"
+            className="fintech-btn-pill flex items-center gap-2 text-xs font-semibold border shadow-sm hover:border-slate-400 transition-all"
             type="button"
           >
             <PencilLine size={13} />
-            <span>Base Capital: {formatCurrency(openingBalance.data?.amount ?? 20000, language, currency)}</span>
+            <span>{t('dashboard.baseCapital')}</span>
           </button>
 
           <button
@@ -262,7 +304,7 @@ export default function DashboardPage() {
               setDemoModeEnabled(next)
               setDemoMode(next)
             }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold border shadow-sm transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`fintech-btn-pill flex items-center gap-2 text-xs font-semibold border shadow-sm transition-all ${
               demoMode
                 ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
                 : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800'
@@ -270,270 +312,167 @@ export default function DashboardPage() {
             type="button"
           >
             <Database size={13} />
-            <span>{demoMode ? 'Demo Mode Active' : 'Enable Demo Data'}</span>
+            <span>{demoMode ? t('dashboard.demoActive') : t('dashboard.enableDemo')}</span>
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* 1. Executive Summary: 4 KPI Cards */}
-      <section aria-label="Executive Summary KPIs" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {/* KPI 1: Current Balance */}
-        <article className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-indigo-400/40 transition-colors">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Current Balance
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                <Wallet size={16} />
-              </div>
-            </div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              {formatCurrency(balance, language, currency)}
-            </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
-            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-              <TrendingUp size={12} /> +18.4%
-            </span>
-            <CompactSparkline data={[110, 115, 120, 128, 134, 142, 148]} color="#10b981" />
-          </div>
-        </article>
-
-        {/* KPI 2: Total Income */}
-        <article className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-indigo-400/40 transition-colors">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Total Income
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center">
-                <ArrowDownLeft size={16} />
-              </div>
-            </div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              {formatCurrency(income, language, currency)}
-            </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
-            <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1">
-              <TrendingUp size={12} /> +12.8%
-            </span>
-            <CompactSparkline data={[24, 28, 31, 35, 38, 41, 42.6]} color="#0d9488" />
-          </div>
-        </article>
-
-        {/* KPI 3: Total Expenses */}
-        <article className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-indigo-400/40 transition-colors">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Total Expenses
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-                <CreditCard size={16} />
-              </div>
-            </div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              {formatCurrency(expenses, language, currency)}
-            </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
-            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-              <ArrowDownRight size={12} /> -3.4% controlled
-            </span>
-            <CompactSparkline data={[21, 20.5, 19.8, 20.2, 19, 18.5, 18.3]} color="#f43f5e" />
-          </div>
-        </article>
-
-        {/* KPI 4: Forecasted End Balance */}
-        <article className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:border-indigo-400/40 transition-colors">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Forecasted End Balance
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                <Sparkles size={16} />
-              </div>
-            </div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              {formatCurrency(forecastEnd, language, currency)}
-            </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
-            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
-              <TrendingUp size={12} /> +9.1% (30D outlook)
-            </span>
-            <CompactSparkline data={[148, 151, 154, 159, 163, 168, 172.5]} color="#6366f1" />
-          </div>
-        </article>
+      {/* 1. Executive KPI Section */}
+      <section aria-label="Executive KPIs" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <KPICard
+          title={t('dashboard.currentBalance')}
+          value={formatCurrency(balance, language, currency)}
+          trend="+18.4"
+          trendLabel="%"
+          icon={Wallet}
+          iconBg="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
+          color="#10b981"
+        />
+        <KPICard
+          title={t('dashboard.totalIncome')}
+          value={formatCurrency(income, language, currency)}
+          trend="+12.8"
+          trendLabel="%"
+          icon={ArrowDownLeft}
+          iconBg="bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400"
+          color="#0d9488"
+        />
+        <KPICard
+          title={t('dashboard.totalExpenses')}
+          value={formatCurrency(expenses, language, currency)}
+          trend="3.4"
+          trendLabel="% controlled"
+          icon={CreditCard}
+          iconBg="bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400"
+          color="#f43f5e"
+        />
+        <KPICard
+          title={t('dashboard.forecastedEndBalance')}
+          value={formatCurrency(forecastEnd, language, currency)}
+          trend="+9.1"
+          trendLabel="% outlook"
+          icon={Sparkles}
+          iconBg="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400"
+          color="#6366f1"
+        />
+        <KPICard
+          title={t('dashboard.financialHealthScore')}
+          value={`${healthScore}/100`}
+          trend={healthScore >= 80 ? 'Excellent' : healthScore >= 60 ? 'Good' : 'Needs Attention'}
+          icon={
+            <Bot size={20} className={healthColor === 'emerald' ? 'text-emerald-500' : healthColor === 'indigo' ? 'text-indigo-500' : 'text-rose-500'} />
+          }
+          iconBg={`bg-${healthColor}-50 dark:bg-${healthColor}-950/40 text-${healthColor}-600 dark:text-${healthColor}-400`}
+          color={healthColor}
+        />
       </section>
 
-      {/* 2. Middle Section: Small Cash Flow Chart + AI Summary Card */}
+      {/* 2. Forecast & Insights Section */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-        {/* Left: Small Cash Flow Forecast Chart (7 Cols) */}
-        <div className="lg:col-span-7 p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">
-                  30-Day Outlook
-                </span>
-                <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                  Cash Flow Forecast
-                </h2>
-              </div>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                Positive Trajectory
+        {/* Left: 30-Day Cash Flow Forecast Chart */}
+        <div className="lg:col-span-7 p-6 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">
+                {t('dashboard.outlook30dTitle')}
               </span>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                {t('forecast.title')}
+              </h2>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-              Projected balance curve based on recurring obligations and scheduled receivables.
-            </p>
-            <CompactForecastChart
-              days={forecast.data?.days || []}
-              openingBalance={balance}
-              language={language}
-              currency={currency}
-            />
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-600 border border-emerald-200 dark:border-emerald-800">
+              {t('dashboard.positiveTrajectory')}
+            </span>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
-            <span>Minimum projected buffer:</span>
-            <strong className="text-slate-900 dark:text-white font-semibold">{formatCurrency(balance * 0.92, language, currency)}</strong>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+            {t('dashboard.forecastDescription')}
+          </p>
+          <CompactForecastChart
+            days={forecast.data?.days || []}
+            language={language}
+            currency={currency}
+            t={t}
+          />
+          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
+            <span>{t('dashboard.minBuffer')}</span>
+            <strong className="text-slate-900 dark:text-white font-semibold">
+              {formatCurrency(balance * 0.92, language, currency)}
+            </strong>
           </div>
         </div>
 
-        {/* Right: AI Summary Card & Financial Health Score (5 Cols) */}
-        <div className="lg:col-span-5 p-5 rounded-2xl bg-gradient-to-br from-indigo-50/50 via-white to-slate-50/50 dark:from-slate-900 dark:via-slate-900/95 dark:to-indigo-950/20 border border-indigo-200/70 dark:border-indigo-900/40 shadow-sm flex flex-col justify-between">
-          <div>
-            {/* Top header with Health score */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
-                  <Bot size={17} />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                    AI Financial Intelligence
-                  </h2>
-                  <span className="text-[10px] text-indigo-500 font-semibold">Tier 1 · Exceptional</span>
-                </div>
+        {/* Right: AI Insights & Financial Health */}
+        <div className="lg:col-span-5 p-6 rounded-2xl bg-gradient-to-br from-indigo-50/50 via-white to-slate-50/50 dark:from-slate-900 dark:via-slate-900/95 dark:to-indigo-950/20 border border-indigo-200/70 dark:border-indigo-900/40 shadow-sm flex flex-col justify-between">
+          {/* AI Pulse Bar */}
+          <div className="h-1.5 bg-emerald-500/20 rounded-full overflow-hidden mb-4">
+            <div className="h-full bg-emerald-500 w-3/4 animate-pulse" />
+          </div>
+
+          {/* Health Score Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-xl bg-${healthColor}-600 text-white flex items-center justify-center`}>
+                <Bot size={17} />
               </div>
-              <div className="text-right">
-                <span className="text-xl font-black text-slate-900 dark:text-white">92</span>
-                <span className="text-xs text-slate-400">/100</span>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                  {t('dashboard.aiTitle')}
+                </h2>
+                <span className="text-[10px] text-indigo-500 font-semibold">
+                  {t('dashboard.aiTier')}
+                </span>
               </div>
             </div>
-
-            {/* Core Summary Bullet Points */}
-            <div className="space-y-2.5 my-3 text-xs">
-              <div className="flex items-start gap-2 p-2 rounded-xl bg-white/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                <CheckCircle2 size={15} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-                <span className="text-slate-700 dark:text-slate-300">
-                  <strong>Cash flow remains stable:</strong> Inflows exceed monthly burn by 2.4x.
-                </span>
-              </div>
-              <div className="flex items-start gap-2 p-2 rounded-xl bg-white/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                <ShieldCheck size={15} className="text-teal-500 flex-shrink-0 mt-0.5" />
-                <span className="text-slate-700 dark:text-slate-300">
-                  <strong>No shortage predicted:</strong> Healthy buffer maintained across all 30 days.
-                </span>
-              </div>
-              <div className="flex items-start gap-2 p-2 rounded-xl bg-white/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                <Sparkles size={15} className="text-amber-500 flex-shrink-0 mt-0.5" />
-                <span className="text-slate-700 dark:text-slate-300">
-                  <strong>3 invoices pending:</strong> Follow up recommended to protect your buffer.
-                </span>
-              </div>
+            <div className="text-right">
+              <span className="text-2xl font-black text-slate-900 dark:text-white">{healthScore}</span>
+              <span className="text-xs text-slate-400">/100</span>
             </div>
           </div>
 
-          {/* Direct CTA to full AI Assistant page */}
+          {/* Core Summary Bullet Points */}
+          <div className="space-y-3 my-3 text-sm">
+            <div className="flex items-start gap-2 p-2 rounded-xl bg-white/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+              <CheckCircle2 size={15} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+              <span className="text-slate-700 dark:text-slate-300">
+                {t('dashboard.aiPoint1')}
+              </span>
+            </div>
+            <div className="flex items-start gap-2 p-2 rounded-xl bg-white/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+              <ShieldCheck size={15} className="text-teal-500 flex-shrink-0 mt-0.5" />
+              <span className="text-slate-700 dark:text-slate-300">
+                {t('dashboard.aiPoint2')}
+              </span>
+            </div>
+            <div className="flex items-start gap-2 p-2 rounded-xl bg-white/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+              <Sparkles size={15} className="text-amber-500 flex-shrink-0 mt-0.5" />
+              <span className="text-slate-700 dark:text-slate-300">
+                {t('dashboard.aiPoint3')}
+              </span>
+            </div>
+          </div>
+
+          {/* CTA to AI Assistant */}
           <Link
             to="/ai-assistant"
-            className="mt-2 w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20"
+            className="mt-4 w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20"
           >
-            <span>Ask AI Copilot & Run Scenarios</span>
+            <span>{t('dashboard.askAiCopilotCta')}</span>
             <ArrowRight size={14} />
           </Link>
         </div>
       </section>
 
-      {/* 3. Quick Actions Row */}
-      <section aria-label="Quick Actions" className="mb-6">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <button
-            onClick={() => setRecordKind('transaction')}
-            className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-500/50 hover:bg-emerald-50/20 transition-all flex items-center gap-3 text-left cursor-pointer group"
-            type="button"
-          >
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-              <FilePlus2 size={16} />
-            </div>
-            <div>
-              <strong className="text-xs font-bold text-slate-900 dark:text-white block">Add Transaction</strong>
-              <span className="text-[10px] text-slate-400">Record flow</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => setRecordKind('receivable')}
-            className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-blue-500/50 hover:bg-blue-50/20 transition-all flex items-center gap-3 text-left cursor-pointer group"
-            type="button"
-          >
-            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-              <ArrowDownLeft size={16} />
-            </div>
-            <div>
-              <strong className="text-xs font-bold text-slate-900 dark:text-white block">Add Receivable</strong>
-              <span className="text-[10px] text-slate-400">Invoice debtor</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => setRecordKind('payable')}
-            className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-500/50 hover:bg-amber-50/20 transition-all flex items-center gap-3 text-left cursor-pointer group"
-            type="button"
-          >
-            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-              <ArrowUpRight size={16} />
-            </div>
-            <div>
-              <strong className="text-xs font-bold text-slate-900 dark:text-white block">Add Payable</strong>
-              <span className="text-[10px] text-slate-400">Schedule bill</span>
-            </div>
-          </button>
-
-          <Link
-            to="/ai-assistant"
-            className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-indigo-500/50 hover:bg-indigo-50/20 transition-all flex items-center gap-3 text-left group"
-          >
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-              <Bot size={16} />
-            </div>
-            <div>
-              <strong className="text-xs font-bold text-slate-900 dark:text-white block">Ask AI Copilot</strong>
-              <span className="text-[10px] text-slate-400">Financial advisor</span>
-            </div>
-          </Link>
-        </div>
-      </section>
-
-      {/* 4. Recent Activity Section */}
-      <section aria-label="Recent Financial Activity">
+      {/* 3. Recent Activity Section */}
+      <section aria-label="Recent Financial Activity" className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Recent Activity
+            {t('dashboard.recentActivity')}
           </h2>
           <Link
             to="/transactions"
             className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
           >
-            <span>View All Transactions</span>
+            <span>{t('dashboard.viewAllTransactions')}</span>
             <ChevronRight size={13} />
           </Link>
         </div>
@@ -560,7 +499,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="min-w-0">
                         <strong className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate block">
-                          {item.category || item.description || 'Transaction'}
+                          {item.category || item.description || t('dashboard.transactionFallback')}
                         </strong>
                         <span className="text-[10px] text-slate-400">
                           {formatDate(item.transactionDate, language)} {item.description && `· ${item.description}`}
@@ -581,9 +520,88 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="p-8 text-center text-slate-400 text-xs">
-              No recent activity found. Click 'Add Transaction' above to record a new transaction.
+              {t('dashboard.noRecentActivity')}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* 4. Quick Actions Section */}
+      <section aria-label="Quick Actions">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+          {t('home.quickActions')}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <button
+            onClick={() => setRecordKind('transaction')}
+            className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-500/50 hover:bg-emerald-50/20 transition-all flex items-center gap-3 text-left cursor-pointer group"
+            type="button"
+          >
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+              <FilePlus2 size={16} />
+            </div>
+            <div>
+              <strong className="text-xs font-bold text-slate-900 dark:text-white block">
+                {t('home.addTransaction')}
+              </strong>
+              <span className="text-[10px] text-slate-400">
+                {t('dashboard.recordFlow')}
+              </span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setRecordKind('receivable')}
+            className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-blue-500/50 hover:bg-blue-50/20 transition-all flex items-center gap-3 text-left cursor-pointer group"
+            type="button"
+          >
+            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+              <ArrowDownLeft size={16} />
+            </div>
+            <div>
+              <strong className="text-xs font-bold text-slate-900 dark:text-white block">
+                {t('home.addReceivable')}
+              </strong>
+              <span className="text-[10px] text-slate-400">
+                {t('dashboard.invoiceDebtor')}
+              </span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setRecordKind('payable')}
+            className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-500/50 hover:bg-amber-50/20 transition-all flex items-center gap-3 text-left cursor-pointer group"
+            type="button"
+          >
+            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+              <ArrowUpRight size={16} />
+            </div>
+            <div>
+              <strong className="text-xs font-bold text-slate-900 dark:text-white block">
+                {t('home.addPayable')}
+              </strong>
+              <span className="text-[10px] text-slate-400">
+                {t('dashboard.scheduleBill')}
+              </span>
+            </div>
+          </button>
+
+          <Link
+            to="/ai-assistant"
+            className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-indigo-500/50 hover:bg-indigo-50/20 transition-all flex items-center gap-3 text-left group"
+          >
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+              <Bot size={16} />
+            </div>
+            <div>
+              <strong className="text-xs font-bold text-slate-900 dark:text-white block">
+                {t('dashboard.askCopilot')}
+              </strong>
+              <span className="text-[10px] text-slate-400">
+                {t('dashboard.financialAdvisor')}
+              </span>
+            </div>
+          </Link>
         </div>
       </section>
 
@@ -598,7 +616,13 @@ export default function DashboardPage() {
       {/* Record Creation Modal */}
       {recordKind && (
         <ModalFrame
-          title={`Add ${recordKind.charAt(0).toUpperCase() + recordKind.slice(1)}`}
+          title={
+            recordKind === 'transaction'
+              ? t('dashboard.addTransactionModal')
+              : recordKind === 'receivable'
+                ? t('dashboard.addReceivableModal')
+                : t('dashboard.addPayableModal')
+          }
           onClose={() => setRecordKind(null)}
         >
           <CreateRecordForm
