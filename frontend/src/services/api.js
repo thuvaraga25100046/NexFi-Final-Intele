@@ -1,4 +1,5 @@
 import { apiClient } from './apiClient.js'
+import { isDemoModeEnabled, mutateDemoResource, readDemoResource, updateDemoOpeningBalance } from './demoData.js'
 
 export const RESOURCE_CHANGED_EVENT = 'nexfi:resource-changed'
 
@@ -11,21 +12,41 @@ function unwrapResponse(response) {
 }
 
 export async function apiGet(path, { signal, params } = {}) {
+  if (isDemoModeEnabled()) {
+    return readDemoResource(path, { signal, params })
+  }
   const response = await apiClient.get(`/api/${path}`, { signal, params })
   return unwrapResponse(response)
 }
 
 export async function apiPost(path, payload, options = {}) {
+  if (isDemoModeEnabled()) {
+    if (['transactions', 'receivables', 'payables'].includes(path)) {
+      return mutateDemoResource(path, 'create', undefined, payload)
+    }
+    throw new Error(`Demo data cannot create "${path}".`)
+  }
   const response = await apiClient.post(`/api/${path}`, payload, options)
   return unwrapResponse(response)
 }
 
 export async function apiPut(path, payload, options = {}) {
+  if (isDemoModeEnabled()) {
+    const [, resource, id] = path.match(/^(transactions|receivables|payables)\/(.+)$/) ?? []
+    if (resource) return mutateDemoResource(resource, 'update', id, payload)
+    if (path === 'opening-balance') return updateDemoOpeningBalance(payload)
+    throw new Error(`Demo data cannot update "${path}".`)
+  }
   const response = await apiClient.put(`/api/${path}`, payload, options)
   return unwrapResponse(response)
 }
 
 export async function apiDelete(path, options = {}) {
+  if (isDemoModeEnabled()) {
+    const [, resource, id] = path.match(/^(transactions|receivables|payables)\/(.+)$/) ?? []
+    if (resource) return mutateDemoResource(resource, 'delete', id)
+    throw new Error(`Demo data cannot delete "${path}".`)
+  }
   const response = await apiClient.delete(`/api/${path}`, options)
   return unwrapResponse(response)
 }

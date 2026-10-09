@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { RESOURCE_CHANGED_EVENT } from '../services/api.js'
+import { DEMO_DATA_KEY, DEMO_MODE_KEY } from '../services/demoData.js'
 
 export default function useApiResource(loader) {
   const [attempt, setAttempt] = useState(0)
@@ -23,8 +24,15 @@ export default function useApiResource(loader) {
 
   useEffect(() => {
     const refresh = () => setAttempt((value) => value + 1)
+    const refreshForStorageChange = (event) => {
+      if (event.key === DEMO_MODE_KEY || event.key === DEMO_DATA_KEY) refresh()
+    }
     window.addEventListener(RESOURCE_CHANGED_EVENT, refresh)
-    return () => window.removeEventListener(RESOURCE_CHANGED_EVENT, refresh)
+    window.addEventListener('storage', refreshForStorageChange)
+    return () => {
+      window.removeEventListener(RESOURCE_CHANGED_EVENT, refresh)
+      window.removeEventListener('storage', refreshForStorageChange)
+    }
   }, [])
 
   return {

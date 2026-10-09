@@ -676,6 +676,19 @@
   color: #a47a70;
 }
 
+.demo-mode-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  color: #216c4d;
+  background: #eaf7ef;
+  border-bottom: 1px solid #cce9d5;
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .workspace-footer {
   background: #fff;
   border-top: 1px solid #e7ece6;
@@ -972,6 +985,43 @@
     color: var(--home-green);
     background: var(--home-mint);
     border-radius: 15px;
+  }
+
+  .home-welcome-actions {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .demo-mode-button {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    gap: 7px;
+    padding: 0 11px;
+    color: #557063;
+    background: #fff;
+    border: 1px solid #dce8df;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
+  }
+
+  .demo-mode-button:hover,
+  .demo-mode-button-active {
+    color: #216c4d;
+    background: #eaf7ef;
+    border-color: #bfe6ce;
+  }
+
+  .demo-mode-error {
+    max-width: 190px;
+    color: #a53f37;
+    font-size: 9px;
+    line-height: 1.4;
   }
 
   .home-hero-balance {

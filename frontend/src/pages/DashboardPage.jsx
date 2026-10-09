@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ArrowDownLeft,
   ArrowRight,
@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   CircleDollarSign,
   CreditCard,
+  Database,
   FilePlus2,
   MessageCircle,
   PencilLine,
@@ -36,6 +37,7 @@ import {
 } from '../services/api.js'
 import useTranslation from '../i18n/useTranslation.js'
 import { formatCurrency, formatDate } from '../i18n/formatters.js'
+import { DEMO_MODE_CHANGED_EVENT, DEMO_MODE_KEY, isDemoModeEnabled, setDemoModeEnabled } from '../services/demoData.js'
 
 const quickStats = [
   { key: 'dashboard.totalIncome', field: 'totalIncome', icon: ArrowDownLeft, tone: 'mint' },
@@ -130,6 +132,8 @@ export default function DashboardPage() {
   const [smartTool, setSmartTool] = useState(null)
   const [purchaseAmount, setPurchaseAmount] = useState('')
   const [invoiceName, setInvoiceName] = useState('')
+  const [demoMode, setDemoMode] = useState(() => isDemoModeEnabled())
+  const [demoModeError, setDemoModeError] = useState('')
   const invoiceInput = useRef(null)
   const summary = useApiResource(fetchDashboardSummary)
   const openingBalance = useApiResource(fetchOpeningBalance)
@@ -162,6 +166,19 @@ export default function DashboardPage() {
     t('forecast.reduceExpenses'),
   ]
 
+  useEffect(() => {
+    const syncDemoMode = () => setDemoMode(isDemoModeEnabled())
+    const syncDemoModeForStorage = (event) => {
+      if (event.key === DEMO_MODE_KEY) syncDemoMode()
+    }
+    window.addEventListener(DEMO_MODE_CHANGED_EVENT, syncDemoMode)
+    window.addEventListener('storage', syncDemoModeForStorage)
+    return () => {
+      window.removeEventListener(DEMO_MODE_CHANGED_EVENT, syncDemoMode)
+      window.removeEventListener('storage', syncDemoModeForStorage)
+    }
+  }, [])
+
   const summaryValue = (field) => summary.loading ? '…' : summary.error ? '—' : formatCurrency(summary.data[field], language, currency)
   const formatGreetingDate = new Intl.DateTimeFormat(language === 'ta' ? 'ta-IN' : language === 'si' ? 'si-LK' : 'en-LK', {
     weekday: 'long',
@@ -178,7 +195,28 @@ export default function DashboardPage() {
           <h1>{greeting}</h1>
           <p>{formatGreetingDate}</p>
         </div>
-        <span className="home-welcome-mark" aria-hidden="true"><Sparkles size={22} /></span>
+        <div className="home-welcome-actions">
+          <button
+            aria-pressed={demoMode}
+            className={`demo-mode-button${demoMode ? ' demo-mode-active' : ''}`}
+            onClick={() => {
+              const enabled = !demoMode
+              try {
+                setDemoModeEnabled(enabled)
+                setDemoMode(enabled)
+                setDemoModeError('')
+              } catch (error) {
+                setDemoModeError(error.message || 'Demo mode could not be changed.')
+              }
+            }}
+            type="button"
+          >
+            <Database size={15} />
+            <span>{demoMode ? 'Demo data on' : 'Use demo data'}</span>
+          </button>
+          {demoModeError && <span className="demo-mode-error" role="alert">{demoModeError}</span>}
+          <span className="home-welcome-mark" aria-hidden="true"><Sparkles size={22} /></span>
+        </div>
       </section>
 
       <section className="home-hero-balance" aria-labelledby="home-balance-title">

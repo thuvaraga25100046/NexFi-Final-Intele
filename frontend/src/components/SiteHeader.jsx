@@ -25,10 +25,11 @@ export default function SiteHeader({ variant = 'application' }) {
         <nav className={`main-nav${menuOpen ? ' main-nav-open' : ''}`} aria-label={t('navigation.main')}>
           {marketing ? (
             <>
-              <a href="#features" onClick={closeMenu}>{t('marketing.whyNexfi')}</a>
-              <a href="#how-it-works" onClick={closeMenu}>{t('marketing.howItWorks')}</a>
-              <a href="#about" onClick={closeMenu}>{t('marketing.about')}</a>
-              <NavLink to="/dashboard" onClick={closeMenu}>{t('navigation.home')}</NavLink>
+              <a href="#home" onClick={closeMenu}>Home</a>
+              <a href="#features" onClick={closeMenu}>Features</a>
+              <a href="#pricing" onClick={closeMenu}>Pricing</a>
+              <a href="#about" onClick={closeMenu}>About</a>
+              <a href="#contact" onClick={closeMenu}>Contact</a>
             </>
           ) : applicationLinks.map(({ key, to }) => (
             <NavLink
@@ -41,11 +42,14 @@ export default function SiteHeader({ variant = 'application' }) {
               {t(key)}
             </NavLink>
           ))}
-          {marketing && <Link className="mobile-nav-cta" to="/dashboard" onClick={closeMenu}>{t('marketing.openHome')} <ArrowUpRight size={15} /></Link>}
+          {marketing && <Link className="mobile-nav-cta" to="/dashboard" onClick={closeMenu}>Get started <ArrowUpRight size={15} /></Link>}
         </nav>
         <div className="nav-actions">
           {marketing ? (
-            <Link className="button button-dark nav-cta" to="/dashboard">{t('marketing.getStarted')} <ArrowUpRight size={16} /></Link>
+            <>
+              <Link className="marketing-login" to="/dashboard">Log in</Link>
+              <Link className="button button-dark nav-cta" to="/dashboard">Sign up <ArrowUpRight size={16} /></Link>
+            </>
           ) : (
             <>
               <div className="language-switcher" role="group" aria-label={t('language.label')}>

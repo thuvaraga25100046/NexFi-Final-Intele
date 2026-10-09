@@ -17,7 +17,7 @@ createRoot(document.getElementById('root')).render(
     <LanguageProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/welcome" element={<LandingPage />} />
           <Route path="/dashboard" element={<AppLayout><DashboardPage /></AppLayout>} />
           <Route path="/transactions" element={<AppLayout><TransactionsPage /></AppLayout>} />

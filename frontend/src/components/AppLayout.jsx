@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowUpRight } from 'lucide-react'
+import { AlertCircle, ArrowUpRight, Database } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Brand from './Brand.jsx'
 import MobileTabBar from './MobileTabBar.jsx'
@@ -23,6 +23,12 @@ export default function AppLayout({ children }) {
           <AlertCircle size={17} />
           <span>{backendMessage}</span>
           {lastCheckedAt && <small>{lastCheckedAt.toLocaleTimeString()}</small>}
+        </div>
+      )}
+      {status === 'demo' && (
+        <div className="demo-mode-banner" role="status">
+          <Database size={16} />
+          <span>Demo mode is on. Changes are saved in this browser only.</span>
         </div>
       )}
       <main className="workspace-main">{children}</main>
