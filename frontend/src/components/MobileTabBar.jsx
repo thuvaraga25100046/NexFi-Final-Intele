@@ -1,4 +1,4 @@
-import { ArrowLeftRight, CircleDollarSign, CreditCard, LayoutDashboard, MoreHorizontal } from 'lucide-react'
+import { ArrowLeftRight, Bot, CircleDollarSign, CreditCard, LayoutDashboard, MoreHorizontal, Sparkles } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import useTranslation from '../i18n/useTranslation.js'
 
@@ -7,7 +7,8 @@ const tabs = [
   { key: 'navigation.transactions', to: '/transactions', icon: ArrowLeftRight },
   { key: 'navigation.receivables', to: '/receivables', icon: CircleDollarSign },
   { key: 'navigation.payables', to: '/payables', icon: CreditCard },
-  { key: 'navigation.more', to: '/settings', icon: MoreHorizontal },
+  { key: 'navigation.aiAssistant', to: '/ai-assistant', icon: Sparkles },
+  { key: 'navigation.settings', to: '/settings', icon: MoreHorizontal },
 ]
 
 export default function MobileTabBar() {

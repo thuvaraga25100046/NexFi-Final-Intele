@@ -9,6 +9,7 @@ const applicationLinks = [
   { key: 'navigation.transactions', to: '/transactions' },
   { key: 'navigation.receivables', to: '/receivables' },
   { key: 'navigation.payables', to: '/payables' },
+  { key: 'navigation.aiAssistant', to: '/ai-assistant' },
   { key: 'navigation.settings', to: '/settings' },
 ]
 
