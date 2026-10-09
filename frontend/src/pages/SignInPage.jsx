@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Mail,
   Lock,
-  MailError,
   ShieldCheck,
   TrendingUp,
 } from 'lucide-react'
