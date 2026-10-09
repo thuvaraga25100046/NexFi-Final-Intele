@@ -1630,7 +1630,11 @@
     display: block;
     width: 100%;
     height: clamp(190px, 29vw, 260px);
-    overflow: visible;
+    overflow: hidden;
+  }
+
+  .forecast-projection-window {
+    fill: #f7f7fc;
   }
 
   .forecast-grid-line {
@@ -1641,6 +1645,12 @@
   .forecast-axis-label {
     fill: #88978c;
     font-size: 10px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .forecast-flow-axis-label {
+    fill: #8b88a5;
+    font-size: 9px;
     font-family: 'DM Sans', sans-serif;
   }
 
@@ -1668,6 +1678,32 @@
     vector-effect: non-scaling-stroke;
   }
 
+  .forecast-projection-area {
+    stroke: none;
+  }
+
+  .forecast-income-line,
+  .forecast-expense-line {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .forecast-income-line { stroke: #299b88; }
+  .forecast-expense-line { stroke: #d77b71; }
+
+  .forecast-income-point,
+  .forecast-expense-point {
+    stroke: #fff;
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .forecast-income-point { fill: #299b88; }
+  .forecast-expense-point { fill: #d77b71; }
+
   .forecast-shortage-marker {
     stroke-dasharray: 3 4;
     stroke-width: 1.5;
@@ -1684,9 +1720,22 @@
   .forecast-date-ticks {
     display: flex;
     justify-content: space-between;
-    padding: 0 2px 0 10.4%;
+    padding: 0 9.6% 0 9.8%;
     color: #88978c;
     font-size: 9px;
+  }
+
+  .forecast-range-badge {
+    flex: 0 0 auto;
+    padding: 8px 11px;
+    color: #6354a8;
+    background: #f1efff;
+    border: 1px solid #e6e2ff;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    white-space: nowrap;
   }
 
   .forecast-chart-legend {
@@ -1712,6 +1761,9 @@
   }
 
   .legend-green { background: #28754a; }
+  .legend-income { background: #299b88; }
+  .legend-expense { background: #d77b71; }
+  .legend-projection { height: 10px !important; background: #e6e2fa; border: 1px solid #d7d0f5; }
   .legend-zero { background: #c2493d; }
   .legend-buffer { background: #d9a441; }
 
@@ -2427,20 +2479,12 @@
       gap: 11px;
     }
 
-    .horizon-switch {
-      align-self: stretch;
-    }
-
-    .horizon-switch button {
-      flex: 1;
+    .forecast-range-badge {
+      align-self: flex-start;
     }
 
     .forecast-chart-svg {
       height: 205px;
-    }
-
-    .forecast-axis-label {
-      font-size: 9px;
     }
 
     .forecast-chart-legend {
