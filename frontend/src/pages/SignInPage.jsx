@@ -180,7 +180,7 @@ function SignInPage() {
               id="rememberMe"
               name="rememberMe"
               checked={formData.rememberMe}
-              onChange={(e) => setFormData((prev) => ({ ...prev, rememberMe: e.target checked }))}
+              onChange={(e) => setFormData((prev) => ({ ...prev, rememberMe: e.target.checked }))}
               className="w-4 h-4 rounded border-slate-600/50 cursor-pointer focus-outline"
             />
             <label htmlFor="rememberMe" className="text-sm text-slate-300 cursor-pointer">
