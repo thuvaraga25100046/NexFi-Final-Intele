@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   // Check localStorage for existing user or demo mode
   const storedUser = typeof window !== 'undefined' ? localStorage.getItem('nexfi.user') : null
   const storedDemo = typeof window !== 'undefined' ? localStorage.getItem('nexfi.demo-mode') : null
+  const storedRemember = typeof window !== 'undefined' ? localStorage.getItem('nexfi.remember-me') : null
 
   const [user, setUser] = useState(() => {
     if (storedUser) {
@@ -24,32 +25,90 @@ export const AuthProvider = ({ children }) => {
     return !!storedUser
   })
 
-  const [rememberMe, setRememberMe] = useState(false)
+  const [rememberMe, setRememberMe] = useState(() => storedRemember === 'true')
+
+  // Hash password (simulated - in real app use bcrypt)
+  const hashPassword = (password) => {
+    // In a real application, use a proper password hashing library like bcrypt
+    // This is a simple simulation for demo purposes
+    return btoa(password)
+  }
+
+  // Verify hashed password
+  const verifyPassword = (storedHash, providedPassword) => {
+    return hashPassword(providedPassword) === storedHash
+  }
 
   // Login user
   const login = (email, password) => {
-    // In a real app, this would call an API
-    // For demo, we validate and store user
-    const demoUsers = [
-      { email: 'demo@nexfi.com', password: 'demo123', name: 'Demo User' }
-    ]
+    // Check rememberMe state
+    if (rememberMe) {
+      localStorage.setItem('nexfi.remember-me', 'true')
+    } else {
+      localStorage.removeItem('nexfi.remember-me')
+    }
 
-    const user = demoUsers.find(
+    // Get all stored users from localStorage
+    const storedUsersStr = localStorage.getItem('nexfi.users')
+    let users = []
+    if (storedUsersStr) {
+      try {
+        users = JSON.parse(storedUsersStr)
+      } catch (e) {
+        users = []
+      }
+    }
+
+    // Also check demo user if no registered users exist
+    const demoUser = users.find(
+      u => u.email === email && verifyPassword(u.passwordHash, password)
+    )
+
+    if (demoUser) {
+      const userData = { id: demoUser.id, email: demoUser.email, name: demoUser.name }
+      setUser(userData)
+      setIsLoggedIn(true)
+      localStorage.setItem('nexfi.user', JSON.stringify(userData))
+      return { success: true }
+    }
+
+    // Check if there are any registered users
+    if (users.length > 0) {
+      const user = users.find(
+        u => u.email === email && verifyPassword(u.passwordHash, password)
+      )
+
+      if (user) {
+        const userData = { id: user.id, email: user.email, name: user.name }
+        setUser(userData)
+        setIsLoggedIn(true)
+        localStorage.setItem('nexfi.user', JSON.stringify(userData))
+        return { success: true }
+      }
+    }
+
+    // Fallback: check hardcoded demo user for backward compatibility
+    const demoUsers = [
+      { email: 'demo@nexfi.com', password: 'demo123', name: 'Demo User', id: 1 }
+    ]
+    const demoUser = demoUsers.find(
       u => u.email === email && u.password === password
     )
 
-    if (user) {
-      const userData = { id: 1, email: user.email, name: user.name }
+    if (demoUser) {
+      const userData = { id: demoUser.id, email: demoUser.email, name: demoUser.name }
       setUser(userData)
       setIsLoggedIn(true)
       localStorage.setItem('nexfi.user', JSON.stringify(userData))
       if (rememberMe) {
         localStorage.setItem('nexfi.remember-me', 'true')
+      } else {
+        localStorage.removeItem('nexfi.remember-me')
       }
       return { success: true }
-    } else {
-      return { success: false, error: 'Invalid email or password' }
     }
+
+    return { success: false, error: 'Invalid email or password' }
   }
 
   // Register user
@@ -63,24 +122,41 @@ export const AuthProvider = ({ children }) => {
       return { success: false, error: 'Password must be at least 6 characters' }
     }
 
+    // Get all stored users from localStorage
+    const storedUsersStr = localStorage.getItem('nexfi.users')
+    let users = []
+    if (storedUsersStr) {
+      try {
+        users = JSON.parse(storedUsersStr)
+      } catch (e) {
+        users = []
+      }
+    }
+
     // Check if user already exists
-    const existingUser = localStorage.getItem('nexfi.user')
+    const existingUser = users.find(u => u.email === email)
     if (existingUser) {
       return { success: false, error: 'Account already exists. Please sign in.' }
     }
 
-    // Create user
+    // Create user with hashed password
     const userData = {
       id: Date.now(),
       email: email,
       name: fullName,
-      password: password // In real app, hash password
+      passwordHash: hashPassword(password) // Store hashed password
     }
 
+    // Add to users array
+    users.push(userData)
+    localStorage.setItem('nexfi.users', JSON.stringify(users))
+
+    // Also set as the current user (remove demo mode)
     setUser(userData)
     setIsLoggedIn(true)
     localStorage.setItem('nexfi.user', JSON.stringify(userData))
     localStorage.removeItem('nexfi.demo-mode')
+    localStorage.removeItem('nexfi.remember-me')
 
     return { success: true }
   }

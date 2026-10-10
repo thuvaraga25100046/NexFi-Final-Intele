@@ -103,6 +103,7 @@ export const translations = {
     'auth.passwordPlaceholder': 'Введите ваш пароль',
     'auth.confirmPasswordPlaceholder': 'Подтвердите пароль',
     'auth.signingUp': 'Регистрация...',
+    'auth.userExists': 'Аккаунт уже существует. Пожалуйста, войдите в систему.',
     'auth.registrationFailed': 'Регистрация не удалась. Попробуйте еще раз.',
     'auth.signingIn': 'Вход в систему...',
     'auth.loginFailed': 'Неверный email или пароль',
