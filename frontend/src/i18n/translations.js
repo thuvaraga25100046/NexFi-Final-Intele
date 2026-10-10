@@ -303,7 +303,7 @@ export const translations = {
     'messages.unavailable': 'Unavailable',
     'messages.backendConnected': 'Connected to the NexFi backend.',
     'messages.checkingBackend': 'Checking backend connection…',
-    'messages.backendUnavailable': 'NexFi backend is unavailable. Your saved data will remain available when the service reconnects.',
+    'messages.backendUnavailable': 'NexFi is working in offline mode. Data is stored locally.',
     'messages.allTime': 'All time',
     'messages.noTransactionsYet': 'No transactions yet',
     'messages.liveSummary': 'Live summary',

@@ -1,9 +1,10 @@
-const DEFAULT_API_BASE_URL = 'http://localhost:8080'
+const DEFAULT_API_BASE_URL = '' // Empty string indicates offline/demo mode
 const DEFAULT_REQUEST_TIMEOUT_MS = 15000
 const DEFAULT_MAX_RETRIES = 2
 const DEFAULT_RETRY_DELAY_MS = 1000
 
 export function resolveApiBaseUrl(env = import.meta.env ?? {}) {
+  // In offline mode, return empty string to signal demo mode
   const baseUrl = env.VITE_API_BASE_URL?.trim()
   return baseUrl || DEFAULT_API_BASE_URL
 }
@@ -70,14 +71,12 @@ export function normalizeApiError(error) {
   }
 
   if (error?.code === 'ERR_NETWORK' || error?.name === 'AxiosError' && !error.response) {
-    return new Error(
-      'NexFi could not reach the backend. Please check that Spring Boot is running on localhost:8080 and try again.',
-      { cause: error },
-    )
+    // In offline mode, return a friendly message instead of referencing localhost:8080
+    return new Error('NexFi is working in offline mode. Data is stored locally.', { cause: error })
   }
 
   if (status >= 500) {
-    return new Error('The backend is currently unavailable. Please try again shortly.', { cause: error })
+    return new Error('The NexFi system is currently unavailable. Please try again shortly.', { cause: error })
   }
 
   return new Error(error?.message || 'NexFi could not complete the request.', { cause: error })
