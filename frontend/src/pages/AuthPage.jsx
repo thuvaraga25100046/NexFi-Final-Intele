@@ -47,6 +47,23 @@ function InputWithIcon({ icon: Icon, type, name, placeholder, value, onChange, .
   )
 }
 
+function PasswordStrengthIndicator({ password }) {
+  const strength = password.length
+  const colors = ['rose', 'orange', 'amber', 'emerald', 'emerald']
+  const labels = ['Too short', 'Weak', 'Medium', 'Strong', 'Strong']
+  
+  if (strength === 0) return null
+  
+  const level = Math.min(strength - 1, 4)
+  
+  return (
+    <div className="mt-1 flex items-center gap-2 text-xs">
+      <span className="text-slate-400">Password strength: </span>
+      <span className={`text-${colors[level]}-500 font-medium}`>{labels[level]}</span>
+    </div>
+  )
+}
+
 function AuthPage() {
   const { t } = useTranslation()
   const { login, register, toggleDemoMode } = useAuth()
@@ -76,14 +93,22 @@ function AuthPage() {
     const { email, password, fullName, username } = formData
     let validationErrors = {}
 
+    // Email format validation
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!email.trim()) {
       validationErrors.email = t('auth.emailRequired')
+    } else if (!emailPattern.test(email)) {
+      validationErrors.email = t('auth.emailInvalid')
     }
+
     if (!password) {
       validationErrors.password = t('auth.passwordRequired')
+    } else if (password.length < 6) {
+      validationErrors.password = t('auth.passwordMinLength')
     }
 
     if (isLogin) {
+      // Login validation
       if (Object.keys(validationErrors).length > 0) {
         setErrors(validationErrors)
         return
@@ -113,9 +138,14 @@ function AuthPage() {
       }
       if (!email.trim()) {
         validationErrors.email = t('auth.emailRequired')
+      } else if (!emailPattern.test(email)) {
+        validationErrors.email = t('auth.emailInvalid')
       }
       if (!password || password.length < 6) {
         validationErrors.password = t('auth.passwordMinLength')
+      }
+      if (password !== formData.confirmPassword) {
+        validationErrors.confirmPassword = t('auth.passwordsDoNotMatch')
       }
 
       if (Object.keys(validationErrors).length > 0) {
@@ -201,48 +231,12 @@ function AuthPage() {
                     showPassword={showPassword}
                     setShowPassword={setShowPassword}
                   />
+                  <PasswordStrengthIndicator password={formData.password} />
                 </div>
                 {errors.password && (
                   <p className="mt-1 text-xs text-rose-400">{errors.password}</p>
                 )}
               </div>
-
-              {/* Remember Me */}
-              {isLogin && (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="rememberMe"
-                    name="rememberMe"
-                    checked={localStorage.getItem('nexfi.remember-me') === 'true'}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, rememberMe: e.target.checked }))
-                    }
-                    className="w-4 h-4 rounded border-slate-600/50 cursor-pointer"
-                  />
-                  <label htmlFor="rememberMe" className="text-sm text-slate-300 cursor-pointer">
-                    {t('auth.rememberMe')}
-                  </label>
-                </div>
-              )}
-
-              {/* Submit button */}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`w-full py-3 px-4 rounded-xl font-medium transition-all ${
-                  isSubmitting ? 'bg-slate-600/50 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg'
-                }`}
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center justify-center">
-                    <span className="animate-spin inline-block mr-2 size-4 border-2 border-white border-t-transparent rounded-full"></span>
-                    {t('auth.signingIn')}
-                  </span>
-                ) : (
-                  <span>{t(isLogin ? 'auth.signIn' : 'auth.signUp')}</span>
-                )}
-              </button>
             </div>
           ) : (
             <div>
@@ -308,6 +302,7 @@ function AuthPage() {
                     showPassword={showPassword}
                     setShowPassword={setShowPassword}
                   />
+                  <PasswordStrengthIndicator password={formData.password} />
                 </div>
                 {errors.password && (
                   <p className="mt-1 text-xs text-rose-400">{errors.password}</p>
@@ -339,26 +334,26 @@ function AuthPage() {
                   <p className="mt-1 text-xs text-rose-400">{errors.confirmPassword}</p>
                 )}
               </div>
-
-              {/* Submit button */}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`w-full py-3 px-4 rounded-xl font-medium transition-all ${
-                  isSubmitting ? 'bg-slate-600/50 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg'
-                }`}
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center justify-center">
-                    <span className="animate-spin inline-block mr-2 size-4 border-2 border-white border-t-transparent rounded-full"></span>
-                    {t('auth.signingUp')}
-                  </span>
-                ) : (
-                  <span>{t('auth.signUp')}</span>
-                )}
-              </button>
             </div>
           )}
+
+          {/* Submit button */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className={`w-full py-3 px-4 rounded-xl font-medium transition-all ${
+              isSubmitting ? 'bg-slate-600/50 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg'
+            }`}
+          >
+            {isSubmitting ? (
+              <span className="flex items-center justify-center">
+                <span className="animate-spin inline-block mr-2 size-4 border-2 border-white border-t-transparent rounded-full"></span>
+                {t('auth.signingIn')}
+              </span>
+            ) : (
+              <span>{t(isLogin ? 'auth.signIn' : 'auth.signUp')}</span>
+            )}
+          </button>
         </form>
 
         {/* Or continue with */}

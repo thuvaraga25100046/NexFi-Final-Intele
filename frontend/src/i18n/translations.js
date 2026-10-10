@@ -96,6 +96,7 @@ export const translations = {
     'auth.passwordRequired': 'Требуется пароль',
     'auth.passwordMinLength': 'Пароль должен быть не менее 6 символов',
     'auth.passwordsDoNotMatch': 'Пароли не совпадают',
+    'auth.emailInvalid': 'Неверный email',
     'auth.fullNameRequired': 'Имя требуется',
     'auth.fullNamePlaceholder': 'Введите ваше полное имя',
     'auth.emailPlaceholder': 'Введите ваш email',
