@@ -41,74 +41,31 @@ export const AuthProvider = ({ children }) => {
 
   // Login user
   const login = (email, password) => {
-    // Check rememberMe state
     if (rememberMe) {
       localStorage.setItem('nexfi.remember-me', 'true')
     } else {
       localStorage.removeItem('nexfi.remember-me')
     }
 
-    // Get all stored users from localStorage
-    const storedUsersStr = localStorage.getItem('nexfi.users')
     let users = []
-    if (storedUsersStr) {
-      try {
-        users = JSON.parse(storedUsersStr)
-      } catch (e) {
-        users = []
-      }
+    try {
+      users = JSON.parse(localStorage.getItem('nexfi.users') || '[]')
+    } catch {
+      users = []
     }
 
-    // Also check demo user if no registered users exist
-    const foundDemoUser = users.find(
-      u => u.email === email && verifyPassword(u.passwordHash, password)
-    )
+    const demoUsers = [{ email: 'demo@nexfi.com', password: 'demo123', name: 'Demo User', id: 1 }]
+    const demo = demoUsers.find((u) => u.email === email && u.password === password)
+    const registered = users.find((u) => u.email === email && verifyPassword(u.passwordHash, password))
+    const match = demo ?? registered
 
-    if (hardcodedDemoUser) {
-      const userData = { id: hardcodedDemoUser.id, email: hardcodedDemoUser.email, name: hardcodedDemoUser.name }
-      setUser(userData)
-      setIsLoggedIn(true)
-      localStorage.setItem('nexfi.user', JSON.stringify(userData))
-      return { success: true }
-    }
+    if (!match) return { success: false, error: 'Invalid email or password' }
 
-    // Check if there are any registered users
-    if (users.length > 0) {
-      const user = users.find(
-        u => u.email === email && verifyPassword(u.passwordHash, password)
-      )
-
-      if (user) {
-        const userData = { id: user.id, email: user.email, name: user.name }
-        setUser(userData)
-        setIsLoggedIn(true)
-        localStorage.setItem('nexfi.user', JSON.stringify(userData))
-        return { success: true }
-      }
-    }
-
-    // Fallback: check hardcoded demo user for backward compatibility
-    const hardcodedDemoUsers = [
-      { email: 'demo@nexfi.com', password: 'demo123', name: 'Demo User', id: 1 }
-    ]
-    const hardcodedDemoUser = hardcodedDemoUsers.find(
-      u => u.email === email && u.password === password
-    )
-
-    if (hardcodedDemoUser) {
-      const userData = { id: hardcodedDemoUser.id, email: hardcodedDemoUser.email, name: hardcodedDemoUser.name }
-      setUser(userData)
-      setIsLoggedIn(true)
-      localStorage.setItem('nexfi.user', JSON.stringify(userData))
-      if (rememberMe) {
-        localStorage.setItem('nexfi.remember-me', 'true')
-      } else {
-        localStorage.removeItem('nexfi.remember-me')
-      }
-      return { success: true }
-    }
-
-    return { success: false, error: 'Invalid email or password' }
+    const userData = { id: match.id, email: match.email, name: match.name }
+    setUser(userData)
+    setIsLoggedIn(true)
+    localStorage.setItem('nexfi.user', JSON.stringify(userData))
+    return { success: true }
   }
 
   // Register user
@@ -197,8 +154,8 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+      <AuthContext.Provider value={value}>
+        {children}
+      </AuthContext.Provider>
   )
 }
