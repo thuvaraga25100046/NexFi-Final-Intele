@@ -1,4 +1,5 @@
 import { useState } from 'react'
+
 import {
   createPayable,
   createReceivable,
@@ -58,11 +59,50 @@ const formConfig = {
 }
 
 export default function CreateRecordForm({ kind, record, onCancel, onCreated }) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const config = formConfig[kind]
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [status, setStatus] = useState(record?.status ?? 'pending')
+  
+  const [chequeType, setChequeType] = useState(record?.chequeType ?? 'received')
+  const [chequeNumber, setChequeNumber] = useState(record?.chequeNumber ?? '')
+  const [bankName, setBankName] = useState(record?.bankName ?? '')
+  const [chequeDate, setChequeDate] = useState(record?.chequeDate ?? today)
+
+  // Language-ku etha maathiri text-galai switch seiyum helper
+  const getChequeText = () => {
+    if (language === 'ta') {
+      return {
+        direction: 'செக் வகை (Cheque Type)',
+        received: 'நாங்கள் வாங்கிய செக் (Received)',
+        issued: 'நாங்கள் கொடுத்த செக் (Issued)',
+        number: 'செக் எண் (Cheque Number)',
+        bank: 'வங்கியின் பெயர் (Bank Name)',
+        date: 'செக் தேதி (Cheque Date)',
+      }
+    } else if (language === 'si') {
+      return {
+        direction: 'චෙක්පත් වර්ගය (Cheque Type)',
+        received: 'ලැබුණු චෙක්පත (Received)',
+        issued: 'දුන් චෙක්පත (Issued)',
+        number: 'චෙක්පත් අංකය (Cheque Number)',
+        bank: 'බැංකුවේ නම (Bank Name)',
+        date: 'චෙක්පත් දිනය (Cheque Date)',
+      }
+    } else {
+      return {
+        direction: 'Cheque Type (Cheque Direction)',
+        received: 'Received Cheque',
+        issued: 'Issued Cheque',
+        number: 'Cheque Number',
+        bank: 'Bank Name',
+        date: 'Cheque Date',
+      }
+    }
+  }
+
+  const cText = getChequeText()
 
   function handleInvalid(event) {
     const field = event.target
@@ -92,7 +132,11 @@ export default function CreateRecordForm({ kind, record, onCancel, onCreated }) 
     setError('')
 
     const formData = Object.fromEntries(new FormData(event.currentTarget))
-    const payload = { ...formData, amount: Number(formData.amount) }
+    let payload = { ...formData, amount: Number(formData.amount) }
+
+    if (kind === 'receivable' || kind === 'cheque') {
+      payload = { ...payload, chequeType, chequeNumber, bankName, chequeDate }
+    }
 
     try {
       if (record) {
@@ -111,6 +155,71 @@ export default function CreateRecordForm({ kind, record, onCancel, onCreated }) 
   return (
     <form className="record-form workspace-panel" onInput={clearValidation} onInvalid={handleInvalid} onSubmit={handleSubmit}>
       <div className="record-form-heading"><h2>{t(record ? config.editTitleKey : config.titleKey)}</h2><p>{t('forms.requiredHelp')}</p></div>
+      
+      {(kind === 'receivable' || kind === 'cheque') && (
+        <div className="mb-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+            {cText.direction}
+          </label>
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <button
+              type="button"
+              onClick={() => setChequeType('received')}
+              className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all ${
+                chequeType === 'received'
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
+              }`}
+            >
+              {cText.received}
+            </button>
+            <button
+              type="button"
+              onClick={() => setChequeType('issued')}
+              className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all ${
+                chequeType === 'issued'
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
+              }`}
+            >
+              {cText.issued}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{cText.number}</label>
+              <input
+                type="text"
+                value={chequeNumber}
+                onChange={(e) => setChequeNumber(e.target.value)}
+                placeholder="e.g. 123456"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{cText.bank}</label>
+              <input
+                type="text"
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="e.g. Commercial Bank"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{cText.date}</label>
+              <input
+                type="date"
+                value={chequeDate}
+                onChange={(e) => setChequeDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="record-form-fields">
         {config.fields.map((field) => (
           field.paidOnly && status !== 'paid' ? null : (

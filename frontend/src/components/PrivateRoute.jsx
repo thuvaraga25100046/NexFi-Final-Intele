@@ -1,4 +1,4 @@
-import { Route, Navigate, useRouteElement } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 function PrivateRoute({ children }) {
@@ -8,8 +8,8 @@ function PrivateRoute({ children }) {
     return <Navigate to="/auth" replace />
   }
 
-  // Render the child route element
-  return useRouteElement({ outlet: 'outlet' }) || children
+  // Render children when authenticated
+  return children
 }
 
 export default PrivateRoute

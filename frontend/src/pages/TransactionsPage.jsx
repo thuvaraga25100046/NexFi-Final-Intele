@@ -108,11 +108,11 @@ export default function TransactionsPage() {
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
             General Ledger
           </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: '#0f172a' }}>
             Transactions
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Track, filter, and categorize all income inflows and operational outflows
+          <p className="text-xs font-semibold mt-1" style={{ color: '#334155' }}>
+            Manage, monitor, and analyze all income and expenses efficiently
           </p>
         </div>
 

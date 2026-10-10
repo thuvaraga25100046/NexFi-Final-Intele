@@ -28,85 +28,14 @@ function dayOffset(value) {
   return Math.round((date.getTime() - today.getTime()) / DAY_MS)
 }
 
+// Demo data complete-ah remove seiyappattathu (Empty state)
 function makeSeedData() {
-  const transactions = [
-    ['income', 385000, 'Client payment', 'Northstar Studio retainer', -1],
-    ['expense', 18400, 'Groceries', 'Weekly market and pantry', -2],
-    ['expense', 62500, 'Utilities', 'Electricity and water', -4],
-    ['income', 215000, 'Consulting', 'Product strategy workshop', -5],
-    ['expense', 32000, 'Transport', 'Fuel and ride share', -7],
-    ['expense', 12800, 'Dining', 'Team lunch', -9],
-    ['income', 148000, 'Salary', 'Monthly salary installment', -11],
-    ['expense', 44900, 'Shopping', 'Home office supplies', -13],
-    ['expense', 27500, 'Subscriptions', 'Software and services', -15],
-    ['income', 96000, 'Freelance', 'Interface design milestone', -17],
-    ['expense', 53500, 'Healthcare', 'Annual health check', -19],
-    ['expense', 36200, 'Groceries', 'Household essentials', -22],
-    ['income', 172000, 'Client payment', 'Cedar Labs project', -24],
-    ['expense', 24000, 'Education', 'Design course', -27],
-    ['expense', 78000, 'Travel', 'Weekend trip booking', -30],
-    ['income', 135000, 'Consulting', 'Research and advisory', -33],
-    ['expense', 19500, 'Dining', 'Dinner with friends', -37],
-    ['income', 118000, 'Freelance', 'Brand identity delivery', -41],
-    ['expense', 28500, 'Utilities', 'Internet and mobile', -45],
-    ['income', 76000, 'Investment', 'Dividend distribution', -51],
-  ].map(([type, amount, category, description, offset], index) => ({
-    id: `demo-transaction-${String(index + 1).padStart(2, '0')}`,
-    type,
-    amount,
-    category,
-    description,
-    transactionDate: dateAtOffset(offset),
-  }))
-
-  const receivableRows = [
-    ['Northstar Studio', 285000, -12, 'paid', -10],
-    ['Cedar Labs', 174000, -3, 'paid', -2],
-    ['Bluebird Creative', 96000, -6, 'overdue', null],
-    ['Fieldwork Co.', 132500, 2, 'pending', null],
-    ['Orbit Health', 215000, 5, 'pending', null],
-    ['Maple & Main', 84500, -2, 'overdue', null],
-    ['Goodwell Partners', 320000, 11, 'pending', null],
-    ['Studio Koru', 118000, -15, 'paid', -13],
-    ['Harbor Analytics', 167500, 18, 'pending', null],
-    ['Morrow Design', 72500, 27, 'pending', null],
-  ]
-  const receivables = receivableRows.map(([customerName, amount, dueOffset, status, paymentOffset], index) => ({
-    id: `demo-receivable-${String(index + 1).padStart(2, '0')}`,
-    customerName,
-    amount,
-    dueDate: dateAtOffset(dueOffset),
-    status,
-    paymentDate: paymentOffset === null ? null : dateAtOffset(paymentOffset),
-  }))
-
-  const payableRows = [
-    ['Cloud Hosting', 42800, -8, 'paid', -8],
-    ['Northside Workspace', 142000, -3, 'overdue', null],
-    ['Bright Energy', 28600, 1, 'pending', null],
-    ['Pixel Supply Co.', 54900, 4, 'pending', null],
-    ['Atlas Insurance', 87500, -5, 'paid', -5],
-    ['Metro Water', 12400, -1, 'overdue', null],
-    ['Team Payroll', 238000, 7, 'pending', null],
-    ['Signal Telecom', 18300, -14, 'paid', -14],
-    ['Evergreen Logistics', 63500, 16, 'pending', null],
-    ['Studio Tools', 32700, 25, 'pending', null],
-  ]
-  const payables = payableRows.map(([vendorName, amount, dueOffset, status, paymentOffset], index) => ({
-    id: `demo-payable-${String(index + 1).padStart(2, '0')}`,
-    vendorName,
-    amount,
-    dueDate: dateAtOffset(dueOffset),
-    status,
-    paymentDate: paymentOffset === null ? null : dateAtOffset(paymentOffset),
-  }))
-
   return {
     version: 1,
-    openingBalance: { amount: 850000 },
-    transactions,
-    receivables,
-    payables,
+    openingBalance: { amount: 0 },
+    transactions: [],
+    receivables: [],
+    payables: [],
   }
 }
 
@@ -306,4 +235,17 @@ export function updateDemoOpeningBalance(payload) {
   data.openingBalance = { ...data.openingBalance, ...payload }
   saveData(data)
   return data.openingBalance
+}
+
+// Demo data complete-ah clear seiyum function
+export function clearDemoData() {
+  if (typeof globalThis.localStorage !== 'undefined') {
+    globalThis.localStorage.removeItem(DEMO_MODE_KEY)
+    globalThis.localStorage.removeItem(DEMO_DATA_KEY)
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(DEMO_MODE_CHANGED_EVENT))
+    window.dispatchEvent(new Event('nexfi:resource-changed'))
+    window.location.reload()
+  }
 }

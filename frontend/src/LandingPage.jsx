@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useAuth } from '../context/AuthContext.jsx'
+import { useState, useRef, useEffect } from 'react'
+import { useAuth } from './context/AuthContext.jsx'
 import {
   AtSign,
   ArrowDownRight,
@@ -334,6 +334,7 @@ function LandingPage() {
             <h2>Start Making Smarter<br />Financial Decisions Today</h2>
             <p>Get a clearer view of your money and make your next move with confidence.</p>
             <button
+              onClick={() => { window.location.href = '/auth' }}
               className="button button-primary"
             >
               Join NexFi <ArrowRight size={17} />

@@ -60,12 +60,12 @@ export const AuthProvider = ({ children }) => {
     }
 
     // Also check demo user if no registered users exist
-    const demoUser = users.find(
+    const foundDemoUser = users.find(
       u => u.email === email && verifyPassword(u.passwordHash, password)
     )
 
-    if (demoUser) {
-      const userData = { id: demoUser.id, email: demoUser.email, name: demoUser.name }
+    if (hardcodedDemoUser) {
+      const userData = { id: hardcodedDemoUser.id, email: hardcodedDemoUser.email, name: hardcodedDemoUser.name }
       setUser(userData)
       setIsLoggedIn(true)
       localStorage.setItem('nexfi.user', JSON.stringify(userData))
@@ -88,15 +88,15 @@ export const AuthProvider = ({ children }) => {
     }
 
     // Fallback: check hardcoded demo user for backward compatibility
-    const demoUsers = [
+    const hardcodedDemoUsers = [
       { email: 'demo@nexfi.com', password: 'demo123', name: 'Demo User', id: 1 }
     ]
-    const demoUser = demoUsers.find(
+    const hardcodedDemoUser = hardcodedDemoUsers.find(
       u => u.email === email && u.password === password
     )
 
-    if (demoUser) {
-      const userData = { id: demoUser.id, email: demoUser.email, name: demoUser.name }
+    if (hardcodedDemoUser) {
+      const userData = { id: hardcodedDemoUser.id, email: hardcodedDemoUser.email, name: hardcodedDemoUser.name }
       setUser(userData)
       setIsLoggedIn(true)
       localStorage.setItem('nexfi.user', JSON.stringify(userData))
