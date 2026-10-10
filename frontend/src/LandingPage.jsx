@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
+import { useAuth } from '../context/AuthContext.jsx'
 import {
   AtSign,
   ArrowDownRight,
@@ -163,6 +164,8 @@ function DashboardIllustration() {
 }
 
 function LandingPage() {
+  const { isLoggedIn, user } = useAuth()
+  const [showAuth, setShowAuth] = useState(false)
   return (
     <div className="site-shell fintech-home" id="home">
       <SiteHeader variant="marketing" />
@@ -176,8 +179,25 @@ function LandingPage() {
               <h1>Know What's Next <span>in Finance</span></h1>
               <p className="hero-description">AI-powered insights bring your spending, plans, and possibilities into focus—so you can move forward with confidence.</p>
               <div className="hero-actions">
-                <Link className="button button-primary" to="/dashboard">Get started <ArrowRight size={17} /></Link>
-                <a className="button button-ghost" href="#demo"><span className="play-icon"><Play size={13} fill="currentColor" /></span> View demo</a>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    window.location.href = '/auth'
+                  }}
+                  className="button button-primary"
+                >
+                  Get started <ArrowRight size={17} />
+                </button>
+                <a
+                  className="button button-ghost"
+                  href="#demo"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    window.location.href = '/auth'
+                  }}
+                >
+                  <span className="play-icon"><Play size={13} fill="currentColor" /></span> View demo
+                </a>
               </div>
               <div className="hero-trust"><ShieldCheck size={16} /> A clearer picture. A more confident next step.</div>
             </Reveal>
@@ -187,6 +207,38 @@ function LandingPage() {
           </div>
           <div className="hero-scroll-cue"><span /> Explore the NexFi experience</div>
         </section>
+
+        {isLoggedIn ? null : (
+          <div className="auth-prompt-section">
+            <div className="max-w-md w-full mx-auto px-4 py-8 text-center">
+              <div className="rounded-xl bg-slate-900/50 p-8 mb-6">
+                <ShieldCheck size={48} className="mx-auto mb-4 text-indigo-500" />
+                <h3 className="text-xl font-bold text-slate-100 mb-2">Welcome to NexFi</h3>
+                <p className="text-slate-400 mb-6">Create your account to explore all features</p>
+                <div className="flex gap-3 justify-center">
+                  <a
+                    href="/signup"
+                    className="button button-primary flex-1"
+                  >
+                    Sign up
+                  </a>
+                  <a
+                    href="/signin"
+                    className="button button-outlined flex-1"
+                  >
+                    Log in
+                  </a>
+                </div>
+              </div>
+              <p className="text-slate-500 text-sm mt-4">
+                Already have an account?{' '}
+                <a href="/signin" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
+                  Log in
+                </a>
+              </p>
+            </div>
+          </div>
+        )}
 
         <section className="metrics-section" aria-label="NexFi platform metrics">
           <div className="metrics-inner mx-auto grid w-full max-w-[1280px]">
@@ -281,7 +333,11 @@ function LandingPage() {
             <span className="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
             <h2>Start Making Smarter<br />Financial Decisions Today</h2>
             <p>Get a clearer view of your money and make your next move with confidence.</p>
-            <Link className="button button-primary" to="/dashboard">Join NexFi <ArrowRight size={17} /></Link>
+            <button
+              className="button button-primary"
+            >
+              Join NexFi <ArrowRight size={17} />
+            </button>
           </Reveal>
         </section>
       </main>
