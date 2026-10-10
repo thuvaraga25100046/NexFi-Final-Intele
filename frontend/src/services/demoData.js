@@ -249,3 +249,10 @@ export function clearDemoData() {
     window.location.reload()
   }
 }
+
+export function resetDemoData() {
+  if (typeof globalThis.localStorage !== 'undefined') {
+    globalThis.localStorage.removeItem(DEMO_DATA_KEY)
+    window.dispatchEvent(new Event('nexfi:resource-changed'))
+  }
+}

@@ -1,5 +1,5 @@
 import React from 'react'
-import { useTranslation } from '../i18n/useTranslation.js'
+import useTranslation from '../i18n/useTranslation.js'
 import { LayoutDashboard, Microscope, ShieldCheck, Database, TrendingUp, FileText, Clock, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
 

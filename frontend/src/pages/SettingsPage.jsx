@@ -27,6 +27,7 @@ import {
   isDemoModeEnabled,
   setDemoModeEnabled,
   DEMO_DATA_KEY,
+  resetDemoData,
 } from '../services/demoData.js'
 
 export default function SettingsPage() {
@@ -95,7 +96,6 @@ export default function SettingsPage() {
   }
 
   const handleExportExcel = () => {
-    // Generate tab-separated spreadsheet format compatible with Excel
     const excelContent = 'Transaction ID\tDate\tEntity\tType\tCategory\tAmount\tCurrency\n' +
       'TX-001\t2026-10-09\tNorthstar Studio\tIncome\tRetainer\t385000\t' + currency + '\n' +
       'TX-002\t2026-10-08\tAWS Cloud\tExpense\tHosting\t18400\t' + currency + '\n'
@@ -110,7 +110,6 @@ export default function SettingsPage() {
   }
 
   const handleExportPDF = () => {
-    // Trigger printable financial executive statement
     showToast('✓ Preparing printable executive financial summary...')
     window.print()
   }
@@ -157,14 +156,12 @@ export default function SettingsPage() {
 
   return (
     <div className="workspace-page max-w-5xl mx-auto pb-16">
-      {/* Toast */}
       {toastMsg && (
         <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl bg-slate-900 text-white border border-white/20 shadow-2xl text-xs font-semibold animate-bounce">
           {toastMsg}
         </div>
       )}
 
-      {/* Header */}
       <div className="mb-6">
         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
           System Configuration
@@ -178,7 +175,6 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6">
-        {/* 1. Profile Settings */}
         <section className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm">
           <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
             <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
@@ -245,7 +241,6 @@ export default function SettingsPage() {
           </form>
         </section>
 
-        {/* 2. Language & Currency Localization */}
         <section className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm">
           <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
             <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center">
@@ -262,7 +257,6 @@ export default function SettingsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {/* Language Switcher */}
             <div>
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-2">
                 Application Language
@@ -293,7 +287,6 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Currency Selector */}
             <div>
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-2">
                 Default Currency
@@ -315,7 +308,6 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* 3. Theme & Aesthetics */}
         <section className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm">
           <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
             <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center">
@@ -360,7 +352,6 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* 4. Notification Settings */}
         <section className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm">
           <div className="flex items-center gap-2.5 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
             <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
@@ -430,7 +421,6 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* 5. Export Reports */}
         <section className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm">
           <div className="flex items-center gap-2.5 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
             <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
@@ -491,7 +481,6 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* 6. Data Management & Backup / Restore */}
         <section className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm">
           <div className="flex items-center gap-2.5 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
             <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
@@ -508,7 +497,6 @@ export default function SettingsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Backup & Restore */}
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-3">
               <strong className="text-xs font-bold text-slate-900 dark:text-white block">
                 JSON Database Backup
@@ -544,7 +532,6 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Sandbox & Demo reset */}
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-3">
               <strong className="text-xs font-bold text-slate-900 dark:text-white block">
                 Sandbox Environment
