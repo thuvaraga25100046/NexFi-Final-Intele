@@ -7,12 +7,10 @@ import DashboardPage from './pages/DashboardPage.jsx'
 import LandingPage from './LandingPage.jsx'
 import PayablesPage from './pages/PayablesPage.jsx'
 import ReceivablesPage from './pages/ReceivablesPage.jsx'
-import SignInPage from './pages/SignInPage.jsx'
-import SignUpPage from './pages/SignUpPage.jsx'
-import SettingsPage from './pages/SettingsPage.jsx'
 import TransactionsPage from './pages/TransactionsPage.jsx'
 import { LanguageProvider } from './i18n/LanguageContext.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
+import AuthPage from './pages/AuthPage.jsx'
 import './landing.css'
 import './workspace.css'
 import { ErrorBoundary } from './components/ErrorBoundary.jsx'
@@ -26,8 +24,9 @@ createRoot(document.getElementById('root')).render(
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/welcome" element={<LandingPage />} />
-              <Route path="/signin" element={<SignInPage />} />
-              <Route path="/signup" element={<SignUpPage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/signin" element={<Navigate to="/auth" replace />} />
+              <Route path="/signup" element={<Navigate to="/auth" replace />} />
               <Route path="/dashboard" element={<AppLayout><DashboardPage /></AppLayout>} />
               <Route path="/transactions" element={<AppLayout><TransactionsPage /></AppLayout>} />
               <Route path="/receivables" element={<AppLayout><ReceivablesPage /></AppLayout>} />

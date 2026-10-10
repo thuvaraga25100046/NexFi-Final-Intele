@@ -1,22 +1,20 @@
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { ErrorBoundary } from './components/ErrorBoundary.jsx'
-import SignInPage from './pages/SignInPage.jsx'
-import SignUpPage from './pages/SignUpPage.jsx'
+import AuthPage from './pages/AuthPage.jsx'
 
 function App() {
   return (
     <ErrorBoundary>
       <Routes>
-        {/* Default Route -> Navigate to SignIn */}
-        <Route path="/" element={<Navigate to="/signin" replace />} />
+        {/* Default Route -> Navigate to Auth */}
+        <Route path="/" element={<Navigate to="/auth" replace />} />
         
         {/* Auth Routes */}
-        <Route path="/signin" element={<SignInPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/auth" element={<AuthPage />} />
 
         {/* Catch-all Route for unknown URLs */}
-        <Route path="*" element={<Navigate to="/signin" replace />} />
+        <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     </ErrorBoundary>
   )
