@@ -53,16 +53,19 @@ function SignInPage() {
     setErrors({})
 
     const { email, password, rememberMe } = formData
+    let validationErrors = {}
 
     if (!email.trim()) {
-      setErrors((prev) => ({ ...prev, email: t('auth.emailRequired') }))
+      validationErrors.email = t('auth.emailRequired')
     }
     if (!password) {
-      setErrors((prev) => ({ ...prev, password: t('auth.passwordRequired') }))
+      validationErrors.password = t('auth.passwordRequired')
     }
 
-    const hasErrors = Object.values(errors).some((e) => e)
-    if (hasErrors || isSubmitting) return
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      return
+    }
 
     setIsSubmitting(true)
     const result = login(email, password)
@@ -190,7 +193,7 @@ function SignInPage() {
             type="submit"
             disabled={isSubmitting}
             className={`w-full py-3 px-4 rounded-xl font-medium transition-all ${
-              isSubmitting ? 'bg-slate-600/50 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg'}
+              isSubmitting ? 'bg-slate-600/50 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg'
             }`}
           >
             {isSubmitting ? (

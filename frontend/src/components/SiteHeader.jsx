@@ -43,13 +43,13 @@ export default function SiteHeader({ variant = 'application' }) {
               {t(key)}
             </NavLink>
           ))}
-          {marketing && <Link className="mobile-nav-cta" to="/dashboard" onClick={closeMenu}>Get started <ArrowUpRight size={15} /></Link>}
+          {marketing && <Link className="mobile-nav-cta" to="/signin" onClick={closeMenu}>Get started <ArrowUpRight size={15} /></Link>}
         </nav>
         <div className="nav-actions">
           {marketing ? (
             <>
-              <Link className="marketing-login" to="/dashboard">Log in</Link>
-              <Link className="button button-dark nav-cta" to="/dashboard">Sign up <ArrowUpRight size={16} /></Link>
+              <Link className="marketing-login" to="/signin">Log in</Link>
+              <Link className="button button-dark nav-cta" to="/signup">Sign up <ArrowUpRight size={16} /></Link>
             </>
           ) : (
             <>
