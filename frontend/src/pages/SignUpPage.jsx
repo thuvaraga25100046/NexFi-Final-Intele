@@ -120,10 +120,7 @@ function SignUpPage() {
     setIsSubmitting(false)
 
     if (result.success) {
-      setShowSuccess(true)
-      setTimeout(() => {
-        window.dispatchEvent(new Event('nexfi:resource-changed'))
-      }, 1500)
+      window.location.href = '/dashboard'
     } else {
       setErrors((prev) => ({ ...prev, general: result.error || t('auth.registrationFailed') }))
     }

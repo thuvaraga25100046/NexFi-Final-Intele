@@ -128,8 +128,7 @@ function AuthPage() {
       setIsSubmitting(false)
 
       if (result.success) {
-        setIsLogin(true) // Switch to login mode after successful registration
-        window.dispatchEvent(new Event('nexfi:resource-changed'))
+        window.location.href = '/dashboard'
       } else {
         setErrors((prev) => ({ ...prev, general: result.error || t('auth.registrationFailed') }))
       }
