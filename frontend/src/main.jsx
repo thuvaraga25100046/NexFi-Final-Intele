@@ -11,6 +11,7 @@ import TransactionsPage from './pages/TransactionsPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import { LanguageProvider } from './i18n/LanguageContext.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
+import PrivateRoute from './components/PrivateRoute.jsx'
 import AuthPage from './pages/AuthPage.jsx'
 import './landing.css'
 import './workspace.css'
@@ -28,12 +29,14 @@ createRoot(document.getElementById('root')).render(
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/signin" element={<Navigate to="/auth" replace />} />
               <Route path="/signup" element={<Navigate to="/auth" replace />} />
+              {/* Protected routes - require authentication */}
               <Route path="/dashboard" element={<AppLayout><DashboardPage /></AppLayout>} />
-              <Route path="/transactions" element={<AppLayout><TransactionsPage /></AppLayout>} />
-              <Route path="/receivables" element={<AppLayout><ReceivablesPage /></AppLayout>} />
-              <Route path="/payables" element={<AppLayout><PayablesPage /></AppLayout>} />
-              <Route path="/ai-assistant" element={<AppLayout><AiAssistantPage /></AppLayout>} />
-              <Route path="/settings" element={<AppLayout><SettingsPage /></AppLayout>} />
+              <Route path="/transactions" element={<PrivateRoute><AppLayout><TransactionsPage /></AppLayout></PrivateRoute>} />
+              <Route path="/receivables" element={<PrivateRoute><AppLayout><ReceivablesPage /></AppLayout></PrivateRoute>} />
+              <Route path="/payables" element={<PrivateRoute><AppLayout><PayablesPage /></AppLayout></PrivateRoute>} />
+              <Route path="/ai-assistant" element={<PrivateRoute><AppLayout><AiAssistantPage /></AppLayout></PrivateRoute>} />
+              <Route path="/settings" element={<PrivateRoute><AppLayout><SettingsPage /></AppLayout></PrivateRoute>} />
+              {/* Public routes */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </ErrorBoundary>
