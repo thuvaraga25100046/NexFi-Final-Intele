@@ -401,11 +401,7 @@ export default function DashboardPage() {
           <div className="space-y-3 my-3 text-sm">
             <div className="flex items-start gap-2 p-2.5 rounded-xl bg-white dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700 shadow-sm">
               <CheckCircle2 size={15} className="text-slate-400 flex-shrink-0 mt-0.5" />
-              <span className="text-slate-950 dark:text-white font-bold text-xs">
-                {t('dashboard.noRecentActivity') || 'No financial data recorded yet.'}
-              </span>
-            </div>
-          </div>
+              
 
           <Link
             to="/ai-assistant"
