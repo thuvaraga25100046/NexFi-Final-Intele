@@ -15,6 +15,7 @@ import {
 import CreateRecordForm from '../components/CreateRecordForm.jsx'
 import PageHeading from '../components/PageHeading.jsx'
 import RecordActions from '../components/RecordActions.jsx'
+import ReminderForm from '../components/ReminderForm';
 import ResourceState from '../components/ResourceState.jsx'
 import useApiResource from '../hooks/useApiResource.js'
 import { deletePayable, fetchPayables } from '../services/api.js'
@@ -202,6 +203,7 @@ export default function PayablesPage() {
         </div>
       </div>
 
+      {/* Add / Edit Payable Form */}
       {formOpen && (
         <div className="mb-6">
           <CreateRecordForm
@@ -217,6 +219,11 @@ export default function PayablesPage() {
           />
         </div>
       )}
+
+      {/* SMS Payment Reminder */}
+      <div className="mb-6">
+        <ReminderForm />
+      </div>
 
       {/* Main Table Deck with Tabs & Search */}
       <div className="rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden">

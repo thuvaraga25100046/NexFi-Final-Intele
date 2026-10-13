@@ -1,52 +1,27 @@
 import { useState } from 'react'
-import {
-  User,
-  AtSign,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Globe,
-  ShieldCheck,
-} from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import useTranslation from '../i18n/useTranslation.js'
 import { useAuth } from '../context/AuthContext.jsx'
-import { Link } from 'react-router-dom'
+import AuthShell from '../components/AuthShell.jsx'
 
-function PasswordToggle({ showPassword, setShowPassword }) {
-  return (
-      <div className="relative">
-        <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
-        >
-          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-        </button>
-      </div>
-  )
-}
+const inputClass =
+    'w-full rounded-xl border border-slate-700/60 bg-slate-900/85 py-3 pl-10 pr-4 text-slate-100 placeholder-slate-500 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500'
 
 function SignInPage() {
   const { t } = useTranslation()
+  const { login } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: false,
   })
   const [errors, setErrors] = useState({})
-  const { login, toggleDemoMode } = useAuth()
-  const [showDemoToggle, setShowDemoToggle] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async (e) => {
@@ -54,7 +29,7 @@ function SignInPage() {
     setErrors({})
 
     const { email, password, rememberMe } = formData
-    let validationErrors = {}
+    const validationErrors = {}
 
     if (!email.trim()) {
       validationErrors.email = t('auth.emailRequired')
@@ -85,39 +60,20 @@ function SignInPage() {
   }
 
   return (
-      <div className="min-h-screen bg-slate-950">
-        <div className="max-w-md w-full mx-auto px-4 py-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-slate-100 mb-2">
-              {t('auth.signIn')}
-            </h2>
-            <p className="text-slate-400 text-sm">
-              {t('auth.welcomeBack')}
-            </p>
-            {showDemoToggle && (
-                <p className="mt-2 text-sm text-slate-500">
-                  {t('dashboard.demoActive')}
-                </p>
-            )}
-            <div className="flex items-center justify-center gap-2 mt-4">
-            <span className="text-slate-500 text-sm">
-              Don't have an account?{' '}
-              <Link
-                  to="/signup"
-                  className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
-              >
-                {t('auth.signUp')}
-              </Link>
-            </span>
-            </div>
-          </div>
+      <AuthShell activeTab="signin" subtitle={t('auth.welcomeBack')}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {errors.general && (
+              <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-center text-sm text-rose-400">
+                {errors.general}
+              </div>
+          )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email or Username */}
-            <div>
-              <label htmlFor="credential" className="block text-sm font-medium text-slate-300 mb-2">
-                {t('auth.email')}
-              </label>
+          {/* Email */}
+          <div>
+            <label htmlFor="credential" className="mb-1.5 block text-xs font-medium text-slate-300">
+              {t('auth.email')}
+            </label>
+            <div className="relative">
               <input
                   type="email"
                   id="credential"
@@ -125,115 +81,76 @@ function SignInPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 text-slate-100 placeholder-slate-400 transition-colors focus-visible:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500/50"
+                  className={inputClass}
                   placeholder={t('auth.emailPlaceholder')}
               />
-              {errors.email && (
-                  <p className="mt-1 text-xs text-rose-400">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
-                {t('auth.password')}
-              </label>
-              <div className="relative">
-                <input
-                    type={showPassword ? 'text' : 'password'}
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 text-slate-100 placeholder-slate-400 transition-colors focus-visible:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500/50"
-                    placeholder={t('auth.passwordPlaceholder')}
-                />
-                <PasswordToggle
-                    showPassword={showPassword}
-                    setShowPassword={setShowPassword}
-                />
+              <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                <Mail className="size-4" />
               </div>
-              {errors.password && (
-                  <p className="mt-1 text-xs text-rose-400">{errors.password}</p>
-              )}
             </div>
+            {errors.email && <p className="mt-1 text-xs text-rose-400">{errors.email}</p>}
+          </div>
 
-            {/* Remember Me */}
-            <div className="flex items-center gap-2">
+          {/* Password */}
+          <div>
+            <label htmlFor="password" className="mb-1.5 block text-xs font-medium text-slate-300">
+              {t('auth.password')}
+            </label>
+            <div className="relative">
+              <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className={`${inputClass} pr-12`}
+                  placeholder={t('auth.passwordPlaceholder')}
+              />
+              <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                <Lock className="size-4" />
+              </div>
+              <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-200"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {errors.password && <p className="mt-1 text-xs text-rose-400">{errors.password}</p>}
+          </div>
+
+          {/* Remember me + Forgot password */}
+          <div className="flex items-center justify-between">
+            <label htmlFor="rememberMe" className="flex cursor-pointer items-center gap-2 text-xs text-slate-300">
               <input
                   type="checkbox"
                   id="rememberMe"
                   name="rememberMe"
                   checked={formData.rememberMe}
-                  onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, rememberMe: e.target.checked }))
-                  }
-                  className="w-4 h-4 rounded border-slate-600/50 cursor-pointer"
+                  onChange={(e) => setFormData((prev) => ({ ...prev, rememberMe: e.target.checked }))}
+                  className="h-4 w-4 cursor-pointer rounded border-slate-600/50 accent-indigo-500"
               />
-              <label htmlFor="rememberMe" className="text-sm text-slate-300 cursor-pointer">
-                {t('auth.rememberMe')}
-              </label>
-            </div>
-            {errors.general && (
-                <p className="mt-2 text-xs text-rose-400">{errors.general}</p>
-            )}
-
-            {/* Forgot Password link */}
-            <div className="text-right mt-2">
-              <a
-                  href="#"
-                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors underline"
-              >
-                {t('auth.forgotPassword')}
-              </a>
-            </div>
-
-            {/* Submit button */}
-            <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`w-full py-3 px-4 rounded-xl font-medium transition-all ${
-                    isSubmitting ? 'bg-slate-600/50 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg'
-                }`}
-            >
-              {isSubmitting ? (
-                  <span className="flex items-center justify-center">
-                <span className="animate-spin inline-block mr-2 size-4 border-2 border-white border-t-transparent rounded-full"></span>
-                    {t('auth.signingIn')}
-              </span>
-              ) : (
-                  <span>{t('auth.signIn')}</span>
-              )}
-            </button>
-          </form>
-
-          {/* Or continue with */}
-          <div className="mt-6 flex items-center gap-4">
-            <span className="flex-1 h-px bg-slate-600/50"></span>
-            <span className="text-sm text-slate-500">Or continue with</span>
-            <span className="flex-1 h-px bg-slate-600/50"></span>
+              {t('auth.rememberMe')}
+            </label>
+            <a href="#" className="text-xs text-indigo-400! transition-colors hover:text-indigo-300!">
+              {t('auth.forgotPassword')}
+            </a>
           </div>
 
-          {/* Social login buttons */}
-          <div className="mt-4 flex gap-2">
-            <button
-                type="button"
-                className="flex-1 py-2 px-4 rounded-xl bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 transition-colors text-sm flex items-center justify-center"
-            >
-              <Globe size={16} className="mr-2" />
-              Google
-            </button>
-            <button
-                type="button"
-                className="flex-1 py-2 px-4 rounded-xl bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 transition-colors text-sm flex items-center justify-center"
-            >
-              <ShieldCheck size={16} className="mr-2" />
-              GitHub
-            </button>
-          </div>
-        </div>
-      </div>
+          {/* Submit */}
+          <button
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 font-medium text-white shadow-lg shadow-indigo-600/25 transition-all hover:bg-indigo-500 disabled:opacity-50"
+          >
+            {isSubmitting ? t('auth.signingIn') : t('auth.signIn')}
+            {!isSubmitting && <ArrowRight size={16} />}
+          </button>
+        </form>
+      </AuthShell>
   )
 }
 

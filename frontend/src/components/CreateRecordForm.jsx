@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { X } from 'lucide-react'
 
 import {
   createPayable,
@@ -64,7 +65,7 @@ export default function CreateRecordForm({ kind, record, onCancel, onCreated }) 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [status, setStatus] = useState(record?.status ?? 'pending')
-  
+
   const [chequeType, setChequeType] = useState(record?.chequeType ?? 'received')
   const [chequeNumber, setChequeNumber] = useState(record?.chequeNumber ?? '')
   const [bankName, setBankName] = useState(record?.bankName ?? '')
@@ -152,114 +153,160 @@ export default function CreateRecordForm({ kind, record, onCancel, onCreated }) 
     }
   }
 
+  const inputClass =
+      'w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:[color-scheme:dark]'
+
   return (
-    <form className="record-form workspace-panel" onInput={clearValidation} onInvalid={handleInvalid} onSubmit={handleSubmit}>
-      <div className="record-form-heading"><h2>{t(record ? config.editTitleKey : config.titleKey)}</h2><p>{t('forms.requiredHelp')}</p></div>
-      
-      {(kind === 'receivable' || kind === 'cheque') && (
-        <div className="mb-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-            {cText.direction}
-          </label>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <button
-              type="button"
-              onClick={() => setChequeType('received')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all ${
-                chequeType === 'received'
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
-              }`}
-            >
-              {cText.received}
-            </button>
-            <button
-              type="button"
-              onClick={() => setChequeType('issued')}
-              className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all ${
-                chequeType === 'issued'
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
-              }`}
-            >
-              {cText.issued}
-            </button>
+      <form
+          className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-5 sm:p-6"
+          onInput={clearValidation}
+          onInvalid={handleInvalid}
+          onSubmit={handleSubmit}
+      >
+        <div className="flex items-start justify-between gap-3 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-white">
+              {t(record ? config.editTitleKey : config.titleKey)}
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">{t('forms.requiredHelp')}</p>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{cText.number}</label>
-              <input
-                type="text"
-                value={chequeNumber}
-                onChange={(e) => setChequeNumber(e.target.value)}
-                placeholder="e.g. 123456"
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{cText.bank}</label>
-              <input
-                type="text"
-                value={bankName}
-                onChange={(e) => setBankName(e.target.value)}
-                placeholder="e.g. Commercial Bank"
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{cText.date}</label>
-              <input
-                type="date"
-                value={chequeDate}
-                onChange={(e) => setChequeDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white"
-              />
-            </div>
-          </div>
+          <button
+              type="button"
+              onClick={onCancel}
+              aria-label={t('actions.cancel')}
+              className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <X size={18} />
+          </button>
         </div>
-      )}
 
-      <div className="record-form-fields">
-        {config.fields.map((field) => (
-          field.paidOnly && status !== 'paid' ? null : (
-          <label className={`record-field${field.name === 'description' ? ' record-field-wide' : ''}`} key={field.name}>
-            <span>{t(field.labelKey)}</span>
-            {field.type === 'select' ? (
-              <select
-                data-label-key={field.labelKey}
-                defaultValue={record?.[field.name] ?? field.options[0][0]}
-                name={field.name}
-                onChange={field.name === 'status' ? (event) => setStatus(event.target.value) : undefined}
-                required
-              >
-                {field.options.map(([value, labelKey]) => <option key={value} value={value}>{t(labelKey)}</option>)}
-              </select>
-            ) : (
-              <input
-                defaultValue={record?.[field.name] ?? field.defaultValue}
-                data-label-key={field.labelKey}
-                maxLength={field.maxLength}
-                max={field.max}
-                min={field.min}
-                name={field.name}
-                placeholder={field.placeholderKey ? t(field.placeholderKey) : undefined}
-                required={field.required !== false}
-                step={field.step}
-                type={field.type}
-              />
-            )}
-          </label>
-          )
-        ))}
-      </div>
-      {error && <p className="record-form-error" role="alert">{t('messages.error')}: {translateApiError(error, t)}</p>}
-      <div className="record-form-actions">
-        <button className="record-cancel" onClick={onCancel} type="button">{t('actions.cancel')}</button>
-        <button className="button button-dark record-submit" disabled={submitting} type="submit">
-          {submitting ? t('actions.saving') : t(config.submitLabelKey)}
-        </button>
-      </div>
-    </form>
+        {(kind === 'receivable' || kind === 'cheque') && (
+            <div className="mb-5 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+                {cText.direction}
+              </label>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <button
+                    type="button"
+                    onClick={() => setChequeType('received')}
+                    className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                        chequeType === 'received'
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                            : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
+                    }`}
+                >
+                  {cText.received}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setChequeType('issued')}
+                    className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                        chequeType === 'issued'
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                            : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700'
+                    }`}
+                >
+                  {cText.issued}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{cText.number}</label>
+                  <input
+                      type="text"
+                      value={chequeNumber}
+                      onChange={(e) => setChequeNumber(e.target.value)}
+                      placeholder="e.g. 123456"
+                      className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{cText.bank}</label>
+                  <input
+                      type="text"
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      placeholder="e.g. Commercial Bank"
+                      className={inputClass}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{cText.date}</label>
+                  <input
+                      type="date"
+                      value={chequeDate}
+                      onChange={(e) => setChequeDate(e.target.value)}
+                      className={inputClass}
+                  />
+                </div>
+              </div>
+            </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {config.fields.map((field) => (
+              field.paidOnly && status !== 'paid' ? null : (
+                  <label className={`block ${field.name === 'description' ? 'sm:col-span-2' : ''}`} key={field.name}>
+              <span className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                {t(field.labelKey)}
+              </span>
+                    {field.type === 'select' ? (
+                        <select
+                            className={`${inputClass} cursor-pointer`}
+                            data-label-key={field.labelKey}
+                            defaultValue={record?.[field.name] ?? field.options[0][0]}
+                            name={field.name}
+                            onChange={field.name === 'status' ? (event) => setStatus(event.target.value) : undefined}
+                            required
+                        >
+                          {field.options.map(([value, labelKey]) => <option key={value} value={value}>{t(labelKey)}</option>)}
+                        </select>
+                    ) : (
+                        <input
+                            className={inputClass}
+                            defaultValue={record?.[field.name] ?? field.defaultValue}
+                            data-label-key={field.labelKey}
+                            maxLength={field.maxLength}
+                            max={field.max}
+                            min={field.min}
+                            name={field.name}
+                            placeholder={field.placeholderKey ? t(field.placeholderKey) : undefined}
+                            required={field.required !== false}
+                            step={field.step}
+                            type={field.type}
+                        />
+                    )}
+                  </label>
+              )
+          ))}
+        </div>
+
+        {error && (
+            <p
+                role="alert"
+                className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold"
+            >
+              {t('messages.error')}: {translateApiError(error, t)}
+            </p>
+        )}
+
+        <div className="flex items-center justify-end gap-2 pt-5 mt-5 border-t border-slate-100 dark:border-slate-800">
+          <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold text-xs transition-colors cursor-pointer"
+          >
+            {t('actions.cancel')}
+          </button>
+          <button
+              type="submit"
+              disabled={submitting}
+              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-sm shadow-indigo-600/30 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+          >
+            {submitting ? t('actions.saving') : t(config.submitLabelKey)}
+          </button>
+        </div>
+      </form>
   )
 }

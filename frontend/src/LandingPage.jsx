@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from './context/AuthContext.jsx'
+import LiveHeroChart from './components/LiveHeroChart.jsx'
+import useLiveSeries from './hooks/useLiveSeries.js'
 import {
   AtSign,
   ArrowDownRight,
@@ -67,9 +69,9 @@ function Reveal({ children, className = '', delay = 0 }) {
   }, [])
 
   return (
-    <div className={`reveal${visible ? ' is-visible' : ''} ${className}`} ref={ref} style={{ '--reveal-delay': `${delay}ms` }}>
-      {children}
-    </div>
+      <div className={`reveal${visible ? ' is-visible' : ''} ${className}`} ref={ref} style={{ '--reveal-delay': `${delay}ms` }}>
+        {children}
+      </div>
   )
 }
 
@@ -107,59 +109,52 @@ function AnimatedMetric({ target, prefix = '', suffix = '', value, label }) {
 
   const formatted = target === 10000 ? `${Math.round(count / 1000)}K` : String(count)
   return (
-    <div className="metric-card" ref={ref}>
-      <strong>{count === target ? value : `${prefix}${formatted}${suffix}`}</strong>
-      <span>{label}</span>
-    </div>
+      <div className="metric-card" ref={ref}>
+        <strong>{count === target ? value : `${prefix}${formatted}${suffix}`}</strong>
+        <span>{label}</span>
+      </div>
   )
 }
 
+const DOWN_PILL_STYLE = { color: '#fb7185', background: 'rgba(251,113,133,.12)', borderColor: 'rgba(251,113,133,.35)' }
+
 function DashboardIllustration() {
+  const { values, balance, change } = useLiveSeries()
+  const up = change >= 0
+  const pct = Math.abs(change).toFixed(1)
+
   return (
-    <div className="hero-visual" aria-label="NexFi financial dashboard preview">
-      <div className="visual-orbit visual-orbit-one" aria-hidden="true" />
-      <div className="visual-orbit visual-orbit-two" aria-hidden="true" />
-      <div className="visual-glow" aria-hidden="true" />
-      <div className="preview-card">
-        <div className="preview-topbar">
-          <div className="preview-brand"><Logo className="preview-logo" decorative variant="compact" /><b>NexFi</b></div>
-          <span className="preview-avatar">AM</span>
+      <div className="hero-visual" aria-label="NexFi financial dashboard preview">
+        <div className="visual-orbit visual-orbit-one" aria-hidden="true" />
+        <div className="visual-orbit visual-orbit-two" aria-hidden="true" />
+        <div className="visual-glow" aria-hidden="true" />
+        <div className="preview-card">
+          <div className="preview-topbar">
+            <div className="preview-brand"><Logo className="preview-logo" decorative variant="compact" /><b>NexFi</b></div>
+            <span className="preview-avatar">AM</span>
+          </div>
+          <div className="preview-intro"><span>YOUR FINANCIAL SNAPSHOT</span><strong>Good morning, Alex</strong></div>
+          <div className="preview-balance">
+            <div><span>Total balance</span><strong className="tabular-nums">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</strong></div>
+            <span className="balance-pill tabular-nums" style={up ? undefined : DOWN_PILL_STYLE}>{up ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />} {pct}%</span>
+          </div>
+          <LiveHeroChart values={values} />
+          <div className="preview-chart-labels"><span>Sep 01</span><span>Sep 08</span><span>Sep 15</span><span>Sep 22</span><span>Today</span></div>
+          <div className="preview-activity-title"><b>Recent activity</b><a href="#features">View all <ArrowUpRight size={13} /></a></div>
+          <div className="preview-activity">
+            <span className="activity-avatar income"><ArrowDownRight size={15} /></span>
+            <span><b>Northstar Studio</b><small>Today · Income</small></span>
+            <strong>+$2,400.00</strong>
+          </div>
+          <div className="preview-activity">
+            <span className="activity-avatar expense"><CreditCard size={14} /></span>
+            <span><b>Everyday Market</b><small>Yesterday · Groceries</small></span>
+            <strong>−$86.42</strong>
+          </div>
         </div>
-        <div className="preview-intro"><span>YOUR FINANCIAL SNAPSHOT</span><strong>Good morning, Alex</strong></div>
-        <div className="preview-balance">
-          <div><span>Total balance</span><strong>$24,560.80</strong></div>
-          <span className="balance-pill"><ArrowUpRight size={14} /> 8.2%</span>
-        </div>
-        <div className="preview-chart" aria-hidden="true">
-          <div className="chart-y-labels"><span>$30k</span><span>$20k</span><span>$10k</span><span>$0</span></div>
-          <svg viewBox="0 0 520 170" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="chart-fill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#8B5CF6" stopOpacity=".28" />
-                <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            <path d="M0 135 C35 126 42 109 76 119 S120 105 151 106 S201 72 231 89 S281 84 309 66 S362 78 388 53 S432 62 457 36 S494 42 520 15 V170 H0Z" fill="url(#chart-fill)" />
-            <path d="M0 135 C35 126 42 109 76 119 S120 105 151 106 S201 72 231 89 S281 84 309 66 S362 78 388 53 S432 62 457 36 S494 42 520 15" fill="none" stroke="#A78BFA" strokeLinecap="round" strokeWidth="3" />
-            <circle cx="520" cy="15" r="5" fill="#C4B5FD" stroke="#fff" strokeWidth="3" />
-          </svg>
-        </div>
-        <div className="preview-chart-labels"><span>Sep 01</span><span>Sep 08</span><span>Sep 15</span><span>Sep 22</span><span>Today</span></div>
-        <div className="preview-activity-title"><b>Recent activity</b><a href="#features">View all <ArrowUpRight size={13} /></a></div>
-        <div className="preview-activity">
-          <span className="activity-avatar income"><ArrowDownRight size={15} /></span>
-          <span><b>Northstar Studio</b><small>Today · Income</small></span>
-          <strong>+$2,400.00</strong>
-        </div>
-        <div className="preview-activity">
-          <span className="activity-avatar expense"><CreditCard size={14} /></span>
-          <span><b>Everyday Market</b><small>Yesterday · Groceries</small></span>
-          <strong>−$86.42</strong>
-        </div>
+        <div className="floating-insight"><span><Sparkles size={15} /></span><div><b>Looking good</b><small>Your plan is on track</small></div><Check size={16} /></div>
+        <div className="floating-trend"><ChartNoAxesCombined size={17} /><span><b>{up ? 'Positive trend' : 'Negative trend'}</b><small>{up ? 'Up' : 'Down'} {pct}% this month</small></span></div>
       </div>
-      <div className="floating-insight"><span><Sparkles size={15} /></span><div><b>Looking good</b><small>Your plan is on track</small></div><Check size={16} /></div>
-      <div className="floating-trend"><ChartNoAxesCombined size={17} /><span><b>Positive trend</b><small>Up 8.2% this month</small></span></div>
-    </div>
   )
 }
 
@@ -167,200 +162,200 @@ function LandingPage() {
   const { isLoggedIn, user } = useAuth()
   const [showAuth, setShowAuth] = useState(false)
   return (
-    <div className="site-shell fintech-home" id="home">
-      <SiteHeader variant="marketing" />
+      <div className="site-shell fintech-home" id="home">
+        <SiteHeader variant="marketing" />
 
-      <main>
-        <section className="hero-section">
-          <div className="hero-backdrop" aria-hidden="true"><span /><span /><span /></div>
-          <div className="hero-inner mx-auto grid w-full max-w-[1280px]">
-            <Reveal className="hero-copy">
-              <div className="hero-kicker"><span className="kicker-pulse" /> FINANCE, WITH FORESIGHT</div>
-              <h1>Know What's Next <span>in Finance</span></h1>
-              <p className="hero-description">AI-powered insights bring your spending, plans, and possibilities into focus—so you can move forward with confidence.</p>
-              <div className="hero-actions">
-                <button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    window.location.href = '/auth'
-                  }}
-                  className="button button-primary"
-                >
-                  Get started <ArrowRight size={17} />
-                </button>
-                <a
-                  className="button button-ghost"
-                  href="#demo"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    window.location.href = '/auth'
-                  }}
-                >
-                  <span className="play-icon"><Play size={13} fill="currentColor" /></span> View demo
-                </a>
-              </div>
-              <div className="hero-trust"><ShieldCheck size={16} /> A clearer picture. A more confident next step.</div>
-            </Reveal>
-            <Reveal className="hero-product" delay={160}>
-              <DashboardIllustration />
-            </Reveal>
-          </div>
-          <div className="hero-scroll-cue"><span /> Explore the NexFi experience</div>
-        </section>
-
-        {isLoggedIn ? null : (
-          <div className="auth-prompt-section">
-            <div className="max-w-md w-full mx-auto px-4 py-8 text-center">
-              <div className="rounded-xl bg-slate-900/50 p-8 mb-6">
-                <ShieldCheck size={48} className="mx-auto mb-4 text-indigo-500" />
-                <h3 className="text-xl font-bold text-slate-100 mb-2">Welcome to NexFi</h3>
-                <p className="text-slate-400 mb-6">Create your account to explore all features</p>
-                <div className="flex gap-3 justify-center">
-                  <a
-                    href="/signup"
-                    className="button button-primary flex-1"
+        <main>
+          <section className="hero-section">
+            <div className="hero-backdrop" aria-hidden="true"><span /><span /><span /></div>
+            <div className="hero-inner mx-auto grid w-full max-w-[1280px]">
+              <Reveal className="hero-copy">
+                <div className="hero-kicker"><span className="kicker-pulse" /> FINANCE, WITH FORESIGHT</div>
+                <h1>Know What's Next <span>in Finance</span></h1>
+                <p className="hero-description">AI-powered insights bring your spending, plans, and possibilities into focus—so you can move forward with confidence.</p>
+                <div className="hero-actions">
+                  <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        window.location.href = '/auth'
+                      }}
+                      className="button button-primary"
                   >
-                    Sign up
-                  </a>
+                    Get started <ArrowRight size={17} />
+                  </button>
                   <a
-                    href="/signin"
-                    className="button button-outlined flex-1"
+                      className="button button-ghost"
+                      href="#demo"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        window.location.href = '/auth'
+                      }}
                   >
-                    Log in
+                    <span className="play-icon"><Play size={13} fill="currentColor" /></span> View demo
                   </a>
                 </div>
-              </div>
-              <p className="text-slate-500 text-sm mt-4">
-                Already have an account?{' '}
-                <a href="/signin" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
-                  Log in
-                </a>
-              </p>
+                <div className="hero-trust"><ShieldCheck size={16} /> A clearer picture. A more confident next step.</div>
+              </Reveal>
+              <Reveal className="hero-product" delay={160}>
+                <DashboardIllustration />
+              </Reveal>
             </div>
-          </div>
-        )}
+            <div className="hero-scroll-cue"><span /> Explore the NexFi experience</div>
+          </section>
 
-        <section className="metrics-section" aria-label="NexFi platform metrics">
-          <div className="metrics-inner mx-auto grid w-full max-w-[1280px]">
-            <p className="metrics-label">A smarter view<br />starts here</p>
-            {metrics.map((metric) => <AnimatedMetric key={metric.label} {...metric} />)}
-          </div>
-          <p className="metrics-disclaimer">Illustrative product metrics for preview purposes.</p>
-        </section>
-
-        <section className="features-section" id="features">
-          <div className="section-inner mx-auto w-full max-w-[1280px]">
-            <Reveal className="section-heading-row">
-              <div>
-                <span className="eyebrow">YOUR FINANCES, IN FOCUS</span>
-                <h2 className="section-title">Everything you need<br /><span>to move with confidence.</span></h2>
-              </div>
-              <p className="section-intro">From everyday spending to the bigger picture, NexFi brings the signals together in one clear, considered workspace.</p>
-            </Reveal>
-            <div className="feature-grid">
-              {features.map(({ icon: Icon, title, description, color }, index) => (
-                <Reveal className="feature-reveal" delay={index * 70} key={title}>
-                  <article className="feature-item">
-                    <span className={`feature-icon feature-${color}`}><Icon size={21} strokeWidth={1.8} /></span>
-                    <span className="feature-number">0{index + 1}</span>
-                    <h3>{title}</h3>
-                    <p>{description}</p>
-                    <a href="#demo" aria-label={`Learn more about ${title}`}><ArrowUpRight size={17} /></a>
-                  </article>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="demo-section" id="demo">
-          <div className="demo-inner mx-auto w-full max-w-[1280px]">
-            <Reveal className="demo-copy">
-              <span className="eyebrow">ONE CLEARER VIEW</span>
-              <h2>Less second-guessing.<br /><span>More room to plan.</span></h2>
-              <p>Bring the day-to-day details together, spot what is changing, and see your next steps without getting lost in the numbers.</p>
-              <ul>
-                <li><Check size={15} /> See income and spending in context</li>
-                <li><Check size={15} /> Keep upcoming plans close at hand</li>
-                <li><Check size={15} /> Turn information into a next step</li>
-              </ul>
-              <Link className="text-link" to="/dashboard">Explore the dashboard <ArrowRight size={16} /></Link>
-            </Reveal>
-            <Reveal className="demo-side" delay={120}>
-              <div className="demo-insight-card">
-                <div className="demo-insight-top"><span className="demo-insight-icon"><Sparkles size={18} /></span><span className="demo-status">INSIGHT PREVIEW</span></div>
-                <h3>Your month, at a glance</h3>
-                <p>Income is trending ahead of expenses. You have a little more room for the goals that matter.</p>
-                <div className="demo-bars" aria-label="Illustrative income and expense comparison">
-                  <div><span>Income</span><i><b style={{ width: '78%' }} /></i><strong>$4,820</strong></div>
-                  <div><span>Expenses</span><i><b style={{ width: '52%' }} /></i><strong>$3,210</strong></div>
-                  <div><span>Goals</span><i><b style={{ width: '36%' }} /></i><strong>$1,100</strong></div>
-                </div>
-                <small className="demo-note">Illustrative dashboard data</small>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        <section className="testimonials-section" id="about">
-          <div className="section-inner mx-auto w-full max-w-[1280px]">
-            <Reveal className="testimonial-heading">
-              <span className="eyebrow">MADE FOR YOUR NEXT MOVE</span>
-              <h2 className="section-title">A little more clarity<br /><span>goes a long way.</span></h2>
-              <p>Sample testimonials for design preview.</p>
-            </Reveal>
-            <div className="testimonial-grid">
-              {testimonials.map(({ initials, name, role, quote }, index) => (
-                <Reveal className="testimonial-reveal" delay={index * 90} key={name}>
-                  <article className="testimonial-card">
-                    <div className="testimonial-stars" aria-label="Five stars">★★★★★</div>
-                    <blockquote>“{quote}”</blockquote>
-                    <div className="testimonial-person">
-                      <span className={`testimonial-avatar avatar-${index}`}>{initials}</span>
-                      <span><b>{name}</b><small>{role}</small></span>
-                      <Check className="testimonial-check" size={16} />
+          {isLoggedIn ? null : (
+              <div className="auth-prompt-section">
+                <div className="max-w-md w-full mx-auto px-4 py-8 text-center">
+                  <div className="rounded-xl bg-slate-900/50 p-8 mb-6">
+                    <ShieldCheck size={48} className="mx-auto mb-4 text-indigo-500" />
+                    <h3 className="text-xl font-bold text-slate-100 mb-2">Welcome to NexFi</h3>
+                    <p className="text-slate-400 mb-6">Create your account to explore all features</p>
+                    <div className="flex gap-3 justify-center">
+                      <a
+                          href="/signup"
+                          className="button button-primary flex-1"
+                      >
+                        Sign up
+                      </a>
+                      <a
+                          href="/signin"
+                          className="button button-outlined flex-1"
+                      >
+                        Log in
+                      </a>
                     </div>
-                  </article>
-                </Reveal>
-              ))}
+                  </div>
+                  <p className="text-slate-500 text-sm mt-4">
+                    Already have an account?{' '}
+                    <a href="/signin" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
+                      Log in
+                    </a>
+                  </p>
+                </div>
+              </div>
+          )}
+
+          <section className="metrics-section" aria-label="NexFi platform metrics">
+            <div className="metrics-inner mx-auto grid w-full max-w-[1280px]">
+              <p className="metrics-label">A smarter view<br />starts here</p>
+              {metrics.map((metric) => <AnimatedMetric key={metric.label} {...metric} />)}
+            </div>
+            <p className="metrics-disclaimer">Illustrative product metrics for preview purposes.</p>
+          </section>
+
+          <section className="features-section" id="features">
+            <div className="section-inner mx-auto w-full max-w-[1280px]">
+              <Reveal className="section-heading-row">
+                <div>
+                  <span className="eyebrow">YOUR FINANCES, IN FOCUS</span>
+                  <h2 className="section-title">Everything you need<br /><span>to move with confidence.</span></h2>
+                </div>
+                <p className="section-intro">From everyday spending to the bigger picture, NexFi brings the signals together in one clear, considered workspace.</p>
+              </Reveal>
+              <div className="feature-grid">
+                {features.map(({ icon: Icon, title, description, color }, index) => (
+                    <Reveal className="feature-reveal" delay={index * 70} key={title}>
+                      <article className="feature-item">
+                        <span className={`feature-icon feature-${color}`}><Icon size={21} strokeWidth={1.8} /></span>
+                        <span className="feature-number">0{index + 1}</span>
+                        <h3>{title}</h3>
+                        <p>{description}</p>
+                        <a href="#demo" aria-label={`Learn more about ${title}`}><ArrowUpRight size={17} /></a>
+                      </article>
+                    </Reveal>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="demo-section" id="demo">
+            <div className="demo-inner mx-auto w-full max-w-[1280px]">
+              <Reveal className="demo-copy">
+                <span className="eyebrow">ONE CLEARER VIEW</span>
+                <h2>Less second-guessing.<br /><span>More room to plan.</span></h2>
+                <p>Bring the day-to-day details together, spot what is changing, and see your next steps without getting lost in the numbers.</p>
+                <ul>
+                  <li><Check size={15} /> See income and spending in context</li>
+                  <li><Check size={15} /> Keep upcoming plans close at hand</li>
+                  <li><Check size={15} /> Turn information into a next step</li>
+                </ul>
+                <Link className="text-link" to="/dashboard">Explore the dashboard <ArrowRight size={16} /></Link>
+              </Reveal>
+              <Reveal className="demo-side" delay={120}>
+                <div className="demo-insight-card">
+                  <div className="demo-insight-top"><span className="demo-insight-icon"><Sparkles size={18} /></span><span className="demo-status">INSIGHT PREVIEW</span></div>
+                  <h3>Your month, at a glance</h3>
+                  <p>Income is trending ahead of expenses. You have a little more room for the goals that matter.</p>
+                  <div className="demo-bars" aria-label="Illustrative income and expense comparison">
+                    <div><span>Income</span><i><b style={{ width: '78%' }} /></i><strong>$4,820</strong></div>
+                    <div><span>Expenses</span><i><b style={{ width: '52%' }} /></i><strong>$3,210</strong></div>
+                    <div><span>Goals</span><i><b style={{ width: '36%' }} /></i><strong>$1,100</strong></div>
+                  </div>
+                  <small className="demo-note">Illustrative dashboard data</small>
+                </div>
+              </Reveal>
+            </div>
+          </section>
+
+          <section className="testimonials-section" id="about">
+            <div className="section-inner mx-auto w-full max-w-[1280px]">
+              <Reveal className="testimonial-heading">
+                <span className="eyebrow">MADE FOR YOUR NEXT MOVE</span>
+                <h2 className="section-title">A little more clarity<br /><span>goes a long way.</span></h2>
+                <p>Sample testimonials for design preview.</p>
+              </Reveal>
+              <div className="testimonial-grid">
+                {testimonials.map(({ initials, name, role, quote }, index) => (
+                    <Reveal className="testimonial-reveal" delay={index * 90} key={name}>
+                      <article className="testimonial-card">
+                        <div className="testimonial-stars" aria-label="Five stars">★★★★★</div>
+                        <blockquote>“{quote}”</blockquote>
+                        <div className="testimonial-person">
+                          <span className={`testimonial-avatar avatar-${index}`}>{initials}</span>
+                          <span><b>{name}</b><small>{role}</small></span>
+                          <Check className="testimonial-check" size={16} />
+                        </div>
+                      </article>
+                    </Reveal>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="pricing-section" id="pricing">
+            <div className="pricing-glow" aria-hidden="true" />
+            <Reveal className="pricing-content">
+              <span className="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
+              <h2>Start Making Smarter<br />Financial Decisions Today</h2>
+              <p>Get a clearer view of your money and make your next move with confidence.</p>
+              <button
+                  onClick={() => { window.location.href = '/auth' }}
+                  className="button button-primary"
+              >
+                Join NexFi <ArrowRight size={17} />
+              </button>
+            </Reveal>
+          </section>
+        </main>
+
+        <footer className="site-footer" id="contact">
+          <div className="footer-inner mx-auto w-full max-w-[1280px]">
+            <div className="footer-brand-block"><Brand /><p>Know what’s next. Make it yours.</p></div>
+            <div className="footer-links">
+              <div><b>Explore</b><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#about">About NexFi</a></div>
+              <div><b>Get started</b><Link to="/dashboard">Dashboard</Link><a href="#demo">Product demo</a><a href="#contact">Contact</a></div>
+            </div>
+            <div className="footer-bottom">
+              <span>© 2026 NexFi. Made for what’s next.</span>
+              <div className="footer-socials" aria-label="Social media">
+                <a href="https://www.linkedin.com/" aria-label="LinkedIn"><AtSign size={16} /></a>
+                <a href="https://x.com/" aria-label="X"><Share2 size={16} /></a>
+                <a href="https://www.instagram.com/" aria-label="Instagram"><Globe size={16} /></a>
+              </div>
             </div>
           </div>
-        </section>
-
-        <section className="pricing-section" id="pricing">
-          <div className="pricing-glow" aria-hidden="true" />
-          <Reveal className="pricing-content">
-            <span className="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
-            <h2>Start Making Smarter<br />Financial Decisions Today</h2>
-            <p>Get a clearer view of your money and make your next move with confidence.</p>
-            <button
-              onClick={() => { window.location.href = '/auth' }}
-              className="button button-primary"
-            >
-              Join NexFi <ArrowRight size={17} />
-            </button>
-          </Reveal>
-        </section>
-      </main>
-
-      <footer className="site-footer" id="contact">
-        <div className="footer-inner mx-auto w-full max-w-[1280px]">
-          <div className="footer-brand-block"><Brand /><p>Know what’s next. Make it yours.</p></div>
-          <div className="footer-links">
-            <div><b>Explore</b><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#about">About NexFi</a></div>
-            <div><b>Get started</b><Link to="/dashboard">Dashboard</Link><a href="#demo">Product demo</a><a href="#contact">Contact</a></div>
-          </div>
-          <div className="footer-bottom">
-            <span>© 2026 NexFi. Made for what’s next.</span>
-            <div className="footer-socials" aria-label="Social media">
-              <a href="https://www.linkedin.com/" aria-label="LinkedIn"><AtSign size={16} /></a>
-              <a href="https://x.com/" aria-label="X"><Share2 size={16} /></a>
-              <a href="https://www.instagram.com/" aria-label="Instagram"><Globe size={16} /></a>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
+        </footer>
+      </div>
   )
 }
 

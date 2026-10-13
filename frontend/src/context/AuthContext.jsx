@@ -54,14 +54,20 @@ export const AuthProvider = ({ children }) => {
       users = []
     }
 
-    const demoUsers = [{ email: 'demo@nexfi.com', password: 'demo123', name: 'Demo User', id: 1 }]
+    const demoUsers = [{ email: 'demo@nexfi.com', password: 'demo123', name: 'Demo User', username: 'demo', id: 1 }]
     const demo = demoUsers.find((u) => u.email === email && u.password === password)
     const registered = users.find((u) => u.email === email && verifyPassword(u.passwordHash, password))
     const match = demo ?? registered
 
     if (!match) return { success: false, error: 'Invalid email or password' }
 
-    const userData = { id: match.id, email: match.email, name: match.name }
+    const userData = {
+      id: match.id,
+      email: match.email,
+      name: match.name,
+      username: match.username || '',
+      createdAt: match.createdAt || '',
+    }
     setUser(userData)
     setIsLoggedIn(true)
     localStorage.setItem('nexfi.user', JSON.stringify(userData))
@@ -69,7 +75,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   // Register user
-  const register = (fullName, email, password) => {
+  const register = (fullName, email, password, username = '') => {
     // Validate
     if (!fullName || !email || !password) {
       return { success: false, error: 'All fields are required' }
@@ -101,6 +107,8 @@ export const AuthProvider = ({ children }) => {
       id: Date.now(),
       email: email,
       name: fullName,
+      username: username.trim(),
+      createdAt: new Date().toISOString(),
       passwordHash: hashPassword(password) // Store hashed password
     }
 
@@ -109,9 +117,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('nexfi.users', JSON.stringify(users))
 
     // Also set as the current user (remove demo mode)
-    setUser(userData)
+    const { passwordHash: _omit, ...sessionUser } = userData
+    setUser(sessionUser)
     setIsLoggedIn(true)
-    localStorage.setItem('nexfi.user', JSON.stringify(userData))
+    localStorage.setItem('nexfi.user', JSON.stringify(sessionUser))
     localStorage.removeItem('nexfi.demo-mode')
     localStorage.removeItem('nexfi.remember-me')
 

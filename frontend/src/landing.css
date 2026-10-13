@@ -1,5 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 @import 'tailwindcss';
+/* Same class-based dark variant as index.css (this file also imports Tailwind) */
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   font-family: 'DM Sans', sans-serif;
@@ -23,7 +25,7 @@ html { min-width: 320px; scroll-behavior: smooth; scroll-padding-top: 84px; }
 body { min-width: 320px; margin: 0; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { font: inherit; }
-a { color: inherit; }
+.site-shell a { color: inherit; }
 ::selection { color: #fff; background: #5b46d6; }
 :focus-visible { outline: 3px solid #9c8bff; outline-offset: 3px; }
 #root { min-height: 100vh; }
