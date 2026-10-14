@@ -14,7 +14,6 @@ import {
   Moon,
   Palette,
   RefreshCw,
-  Save,
   ShieldCheck,
   Sun,
   Upload,
@@ -36,7 +35,12 @@ export default function SettingsPage() {
   // Profile State
   const [accountName, setAccountName] = useState(() => localStorage.getItem('nexfi.account-name') || 'Thuvaraga S.A')
   const [businessName, setBusinessName] = useState(() => localStorage.getItem('nexfi.business-name') || 'NexFi Technologies Ltd')
-  const [email, setEmail] = useState(() => localStorage.getItem('nexfi.email') || 'it25100046@my.sliit.lk')
+  const [email, setEmail] = useState(() => {
+    const savedEmail = localStorage.getItem('nexfi.email')
+    return ['it25100046@my.sliit.lk', 'IT25103946@my.sliit.lk'].includes(savedEmail)
+      ? 'it25100046@my.sliit.lk'
+      : savedEmail || 'it25100046@my.sliit.lk'
+  })
 
   // Theme State
   const [theme, setTheme] = useState(() => localStorage.getItem('nexfi_dashboard_theme') || 'dark')
@@ -70,13 +74,15 @@ export default function SettingsPage() {
     showToast(`✓ Theme switched to ${newTheme === 'dark' ? 'Obsidian Dark' : 'Clean Light'}`)
   }
 
-  // Save Profile Changes
-  const handleSaveProfile = (e) => {
-    e.preventDefault()
-    localStorage.setItem('nexfi.account-name', accountName)
-    localStorage.setItem('nexfi.business-name', businessName)
-    localStorage.setItem('nexfi.email', email)
-    showToast('✓ Profile settings saved successfully!')
+  // Profile fields are saved automatically as you type (no Save button needed)
+  const updateProfileField = (storageKey, setter) => (e) => {
+    const value = e.target.value
+    setter(value)
+    try {
+      localStorage.setItem(storageKey, value)
+    } catch {
+      // storage unavailable: the value stays in the form for this session
+    }
   }
 
   // Report Exporters
@@ -175,72 +181,6 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-6">
-          <section className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm">
-            <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                <UserRound size={17} />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Organization Profile
-                </h2>
-                <p className="text-xs text-slate-400">
-                  Primary business identity and authorized member credentials
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSaveProfile} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Full Name
-                  </label>
-                  <input
-                      type="text"
-                      value={accountName}
-                      onChange={(e) => setAccountName(e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Business Entity
-                  </label>
-                  <input
-                      type="text"
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
-                    Official Email
-                  </label>
-                  <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2 flex justify-end">
-                <button
-                    type="submit"
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Save size={14} />
-                  <span>Save Profile Changes</span>
-                </button>
-              </div>
-            </form>
-          </section>
-
           <section className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm">
             <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
               <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center">
@@ -554,6 +494,62 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
+          </section>
+
+          <section className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-sm">
+            <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                <UserRound size={17} />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Organization Profile
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Primary business identity and authorized member credentials
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Full Name
+                  </label>
+                  <input
+                      type="text"
+                      value={accountName}
+                      onChange={updateProfileField('nexfi.account-name', setAccountName)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Business Entity
+                  </label>
+                  <input
+                      type="text"
+                      value={businessName}
+                      onChange={updateProfileField('nexfi.business-name', setBusinessName)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+                    Contact us
+                  </label>
+                  <input
+                      type="email"
+                      value={email}
+                      onChange={updateProfileField('nexfi.email', setEmail)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+            </form>
           </section>
         </div>
       </div>

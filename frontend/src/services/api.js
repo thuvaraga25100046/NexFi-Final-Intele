@@ -1,10 +1,7 @@
-import { apiClient } from './apiClient.js'
+import { API_BASE_URL, apiClient } from './apiClient.js'
 import { isDemoModeEnabled, mutateDemoResource, readDemoResource, updateDemoOpeningBalance } from './demoData.js'
 
 export const RESOURCE_CHANGED_EVENT = 'nexfi:resource-changed'
-
-// Define API Base URL (Empty string means pure offline/demo mode without backend on port 8080)
-const API_BASE_URL = ''
 
 function unwrapResponse(response) {
   const result = response.data

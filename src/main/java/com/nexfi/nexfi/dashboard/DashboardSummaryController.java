@@ -34,4 +34,5 @@ public class DashboardSummaryController {
         }
         return ApiResponse.success("Cash flow forecast retrieved", cashFlowForecastService.getForecast(days));
     }
+
 }

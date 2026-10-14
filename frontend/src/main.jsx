@@ -17,6 +17,7 @@ import PayablesPage from './pages/PayablesPage.jsx'
 import ReceivablesPage from './pages/ReceivablesPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import AiCopilotPage from './pages/AiCopilotPage.jsx'
+import WhatIfPage from './pages/WhatIfPage.jsx'
 import { LanguageProvider } from './i18n/LanguageContext.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import './index.css'
@@ -39,6 +40,7 @@ function AppLayout() {
                         <Route path="/receivables" element={<ReceivablesPage />} />
                         <Route path="/settings" element={<SettingsPage />} />
                         <Route path="/ai-assistant" element={<AiCopilotPage />} />
+                        <Route path="/what-if" element={<WhatIfPage />} />
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>
                 </PageTransition>
