@@ -14,7 +14,6 @@ import {
 } from 'lucide-react'
 import CreateRecordForm from '../components/CreateRecordForm.jsx'
 import OpeningBalanceModal from '../components/OpeningBalanceModal.jsx'
-import AiChatCard from '../components/dashboard/AiChatCard.jsx'
 import useTranslation from '../i18n/useTranslation.js'
 import { formatCurrency } from '../i18n/formatters.js'
 import {
@@ -782,13 +781,6 @@ export default function DashboardPage() {
             />
           </div>
 
-          <AiChatCard
-              healthScore={healthScore}
-              balance={balance}
-              income={income}
-              expenses={expenses}
-              forecast={forecast}
-          />
         </section>
 
         {openingBalanceDialogOpen && (
@@ -819,6 +811,16 @@ export default function DashboardPage() {
               />
             </ModalFrame>
         )}
+
+        <Link
+            to="/ai-assistant"
+            aria-label={t('dashboard.askCopilot')}
+            title={t('dashboard.askCopilot')}
+            className="fixed bottom-24 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 transition hover:scale-105 hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-300 dark:focus-visible:ring-indigo-900 md:bottom-6 md:right-6"
+        >
+          <span className="absolute inset-0 animate-ping rounded-full bg-indigo-500 opacity-20" aria-hidden="true" />
+          <Bot size={25} aria-hidden="true" />
+        </Link>
       </div>
   )
 }
