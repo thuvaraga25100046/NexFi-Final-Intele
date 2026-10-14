@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { useAuth } from './context/AuthContext.jsx'
-import LiveHeroChart from './components/LiveHeroChart.jsx'
-import useLiveSeries from './hooks/useLiveSeries.js'
+import { useAuth } from '../context/AuthContext.jsx'
+import LiveHeroChart from '../components/LiveHeroChart.jsx'
+import useLiveSeries from '../hooks/useLiveSeries.js'
 import {
   AtSign,
   ArrowDownRight,
@@ -13,6 +13,7 @@ import {
   CreditCard,
   Globe,
   Landmark,
+  MapPin,
   PieChart,
   Play,
   Share2,
@@ -21,9 +22,9 @@ import {
   Wallet,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import Brand from './components/Brand.jsx'
-import Logo from './components/Logo.jsx'
-import SiteHeader from './components/SiteHeader.jsx'
+import Brand from '../components/Brand.jsx'
+import Logo from '../components/Logo.jsx'
+import SiteHeader from '../components/SiteHeader.jsx'
 
 const features = [
   { icon: ChartNoAxesCombined, title: 'AI market predictions', description: 'Explore emerging trends with clear, forward-looking insights.', color: 'violet' },
@@ -35,16 +36,34 @@ const features = [
 ]
 
 const metrics = [
-  { target: 10000, suffix: '+', value: '10K+', label: 'Active users' },
-  { target: 5, prefix: '$', suffix: 'M+', value: '$5M+', label: 'Tracked assets' },
+  { target: 3, suffix: '', value: '3', label: 'Languages' },
+  { target: 4, suffix: '', value: '4', label: 'Currencies' },
   { target: 95, suffix: '%', value: '95%', label: 'Prediction accuracy' },
   { target: 24, suffix: '/7', value: '24/7', label: 'AI monitoring' },
 ]
 
-const testimonials = [
-  { initials: 'AM', name: 'Alex Morgan', role: 'Independent consultant', quote: 'I finally have a clear view of what is coming up and what I can plan for next.' },
-  { initials: 'JR', name: 'Jordan Rivera', role: 'Small business owner', quote: 'The calm, simple overview makes it easier to stay on top of the details.' },
-  { initials: 'SK', name: 'Sam Kim', role: 'Product designer', quote: 'NexFi helps me turn money questions into a plan I can actually follow.' },
+const launchHighlights = [
+  {
+    icon: Wallet,
+    label: 'YOUR OVERVIEW',
+    title: 'See the full picture',
+    description: 'Bring balances, income, and everyday spending into one clear view.',
+    color: 'violet',
+  },
+  {
+    icon: BellRing,
+    label: 'STAY ON TRACK',
+    title: 'Keep plans close',
+    description: 'Keep upcoming bills and financial priorities easy to find.',
+    color: 'mint',
+  },
+  {
+    icon: ChartNoAxesCombined,
+    label: 'MAKE YOUR NEXT MOVE',
+    title: 'Turn details into direction',
+    description: 'Use thoughtful insights to understand your finances and plan ahead.',
+    color: 'blue',
+  },
 ]
 
 function Reveal({ children, className = '', delay = 0 }) {
@@ -107,10 +126,9 @@ function AnimatedMetric({ target, prefix = '', suffix = '', value, label }) {
     }
   }, [target])
 
-  const formatted = target === 10000 ? `${Math.round(count / 1000)}K` : String(count)
   return (
       <div className="metric-card" ref={ref}>
-        <strong>{count === target ? value : `${prefix}${formatted}${suffix}`}</strong>
+        <strong>{count === target ? value : `${prefix}${count}${suffix}`}</strong>
         <span>{label}</span>
       </div>
   )
@@ -133,7 +151,7 @@ function DashboardIllustration() {
             <div className="preview-brand"><Logo className="preview-logo" decorative variant="compact" /><b>NexFi</b></div>
             <span className="preview-avatar">AM</span>
           </div>
-          <div className="preview-intro"><span>YOUR FINANCIAL SNAPSHOT</span><strong>Good morning, Alex</strong></div>
+          <div className="preview-intro"><span>YOUR FINANCIAL SNAPSHOT</span><strong>Good morning</strong></div>
           <div className="preview-balance">
             <div><span>Total balance</span><strong className="tabular-nums">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</strong></div>
             <span className="balance-pill tabular-nums" style={up ? undefined : DOWN_PILL_STYLE}>{up ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />} {pct}%</span>
@@ -170,6 +188,9 @@ function LandingPage() {
             <div className="hero-backdrop" aria-hidden="true"><span /><span /><span /></div>
             <div className="hero-inner mx-auto grid w-full max-w-[1280px]">
               <Reveal className="hero-copy">
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300 mb-4">
+                  <MapPin size={13} /> Now available in Sri Lanka 🇱🇰
+                </div>
                 <div className="hero-kicker"><span className="kicker-pulse" /> FINANCE, WITH FORESIGHT</div>
                 <h1>Know What's Next <span>in Finance</span></h1>
                 <p className="hero-description">AI-powered insights bring your spending, plans, and possibilities into focus—so you can move forward with confidence.</p>
@@ -297,24 +318,21 @@ function LandingPage() {
             </div>
           </section>
 
-          <section className="testimonials-section" id="about">
+          <section className="launch-section" id="about">
             <div className="section-inner mx-auto w-full max-w-[1280px]">
-              <Reveal className="testimonial-heading">
+              <Reveal className="launch-heading">
                 <span className="eyebrow">MADE FOR YOUR NEXT MOVE</span>
-                <h2 className="section-title">A little more clarity<br /><span>goes a long way.</span></h2>
-                <p>Sample testimonials for design preview.</p>
+                <h2 className="section-title">Your money, in focus.<br /><span>Your next move, in reach.</span></h2>
+                <p>A clearer way to understand today and plan for what comes next.</p>
               </Reveal>
-              <div className="testimonial-grid">
-                {testimonials.map(({ initials, name, role, quote }, index) => (
-                    <Reveal className="testimonial-reveal" delay={index * 90} key={name}>
-                      <article className="testimonial-card">
-                        <div className="testimonial-stars" aria-label="Five stars">★★★★★</div>
-                        <blockquote>“{quote}”</blockquote>
-                        <div className="testimonial-person">
-                          <span className={`testimonial-avatar avatar-${index}`}>{initials}</span>
-                          <span><b>{name}</b><small>{role}</small></span>
-                          <Check className="testimonial-check" size={16} />
-                        </div>
+              <div className="launch-grid">
+                {launchHighlights.map(({ icon: Icon, label, title, description, color }, index) => (
+                    <Reveal className="launch-reveal" delay={index * 90} key={title}>
+                      <article className="launch-card">
+                        <span className={`launch-icon feature-${color}`}><Icon size={20} /></span>
+                        <span className="launch-label">{label}</span>
+                        <h3>{title}</h3>
+                        <p>{description}</p>
                       </article>
                     </Reveal>
                 ))}
